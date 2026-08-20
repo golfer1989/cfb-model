@@ -1,0 +1,197 @@
+{
+  "fitted_on": {
+    "games_file": "G:\\My Drive\\BRAZOS FOLDER\\Claude Documents\\CFB_Simulator\\data\\real_games.csv",
+    "seasons": [
+      2024,
+      2025
+    ]
+  },
+  "params": {
+    "lam": 0.25,
+    "decay": 0.2,
+    "conf_shrink": true
+  },
+  "out_of_sample": {
+    "n_games": 1853,
+    "margin_rmse": 16.063742065191494,
+    "margin_mae": 12.81513629739106,
+    "margin_bias": -0.6019603871811134,
+    "total_rmse": 16.59778018313007,
+    "total_mae": 13.210717624983525,
+    "total_bias": 0.3840132713891319,
+    "su_accuracy": 0.7388019427954668,
+    "score_resid_std": 11.547539239507966,
+    "resid_corr": 0.03338223904748379,
+    "margin_resid_std": 16.052459401265196,
+    "total_resid_std": 16.593337241643173
+  },
+  "total_calibration": {
+    "slope": 0.45152688888224674,
+    "intercept": 29.64081909417536,
+    "r2": 0.057102401804101255,
+    "n_fit": 919,
+    "fit_seasons": [
+      2024
+    ]
+  },
+  "calibration": {
+    "brier": 0.1673649501394977,
+    "log_loss": 0.49607021822374026
+  },
+  "NOTE": "score_resid_std here is OUT-OF-SAMPLE and is the value the simulator should use. The in-sample figure from fit_ratings is biased low because ratings were fitted to those games.",
+  "edge_shrinkage": {
+    "n": 1785,
+    "alpha": 0.9446094181278624,
+    "alpha_se": 0.3572617273269875,
+    "beta": 0.11520793920403234,
+    "beta_se": 0.0588850613353463,
+    "beta_t": 1.9564883960624784,
+    "resid_sd": 15.064236295275387,
+    "significant": false,
+    "interpretation": "model edge is indistinguishable from noise; report ~50% cover",
+    "shrink_factor": 0.0,
+    "gate_passed": false,
+    "gate_reason": "FAILED: pooled_significant, prior_fit_significant"
+  },
+  "total_edge_shrinkage": {
+    "n": 1790,
+    "alpha": 1.0076621334613354e-15,
+    "beta": 0.07766622636755273,
+    "beta_se": 0.156553712701968,
+    "beta_t": 0.496099549650453,
+    "resid_sd": 15.724829939239116,
+    "significant": false,
+    "note": "beta measures the model's contribution AFTER removing the market-fade component the calibrated total is dominated by",
+    "shrink_factor": 0.0,
+    "gate_passed": false,
+    "gate_reason": "FAILED: pooled_significant, prior_fit_significant, holdout_confirms"
+  },
+  "validation_gate": {
+    "spread": {
+      "gate_t": 2.0,
+      "per_season": [
+        {
+          "season": 2024,
+          "n": 871,
+          "beta": 0.043358070297503236,
+          "t": 0.5471036765659486
+        },
+        {
+          "season": 2025,
+          "n": 914,
+          "beta": 0.20625670526770304,
+          "t": 2.340300709984741
+        }
+      ],
+      "passed": false,
+      "reason": "FAILED: pooled_significant, prior_fit_significant",
+      "seasons": [
+        2024,
+        2025
+      ],
+      "pooled": {
+        "n": 1785,
+        "beta": 0.11520793920403234,
+        "t": 1.9564883960624784
+      },
+      "fit_seasons": [
+        2024
+      ],
+      "test_season": 2025,
+      "fit": {
+        "n": 871,
+        "beta": 0.043358070297503236,
+        "t": 0.5471036765659486
+      },
+      "test": {
+        "n": 914,
+        "beta": 0.20625670526770304,
+        "t": 2.340300709984741
+      },
+      "sign_consistent": true,
+      "checks": {
+        "pooled_significant": false,
+        "prior_fit_significant": false,
+        "holdout_confirms": true,
+        "sign_consistent": true
+      }
+    },
+    "total": {
+      "gate_t": 2.0,
+      "per_season": [
+        {
+          "season": 2024,
+          "n": 869,
+          "beta": 0.09977005625545671,
+          "t": 0.43040733610286025
+        },
+        {
+          "season": 2025,
+          "n": 921,
+          "beta": 0.04699510974854404,
+          "t": 0.22175175016707202
+        }
+      ],
+      "passed": false,
+      "reason": "FAILED: pooled_significant, prior_fit_significant, holdout_confirms",
+      "seasons": [
+        2024,
+        2025
+      ],
+      "pooled": {
+        "n": 1790,
+        "beta": 0.07766622636755273,
+        "t": 0.496099549650453
+      },
+      "fit_seasons": [
+        2024
+      ],
+      "test_season": 2025,
+      "fit": {
+        "n": 869,
+        "beta": 0.09977005625545671,
+        "t": 0.43040733610286025
+      },
+      "test": {
+        "n": 921,
+        "beta": 0.04699510974854404,
+        "t": 0.22175175016707202
+      },
+      "sign_consistent": true,
+      "checks": {
+        "pooled_significant": false,
+        "prior_fit_significant": false,
+        "holdout_confirms": false,
+        "sign_consistent": true
+      }
+    }
+  },
+  "clv_diagnostic": {
+    "n": 1452,
+    "direction_agree": 0.5523415977961432,
+    "corr": 0.07490427363516929,
+    "clv_points": 0.26515151515151514,
+    "clv_t": 3.9529408974432463,
+    "clv_by_season": [
+      {
+        "season": 2024,
+        "n": 741,
+        "clv_points": 0.10323886639676114,
+        "clv_t": 1.1232266626068839
+      },
+      {
+        "season": 2025,
+        "n": 711,
+        "clv_points": 0.4338959212376934,
+        "clv_t": 4.4462586602131156
+      }
+    ],
+    "total_clv": {
+      "n": 1790,
+      "beta": 0.09407142757476186,
+      "se": 0.010135844294402662,
+      "t": 9.28106478773664
+    },
+    "NOTE": "monitoring statistic only -- CLV is an UPPER BOUND on edge, not a substitute for it (measured +0.27 pts against the 0.90 pts needed to break even at -110). Deliberately NOT consumed by run_report.py. If the 2025 spread CLV repeats on fresh 2026 data it becomes a two-season result worth revisiting; on one season it is a coin that landed heads."
+  }
+}
