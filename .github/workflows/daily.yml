@@ -1,0 +1,60 @@
+name: Daily CFB report
+
+on:
+  schedule:
+    # Two UTC firings so 8:00 AM America/Chicago is hit in BOTH daylight
+    # saving (13:00 UTC) and standard time (14:00 UTC). The guard step below
+    # lets exactly one of them proceed each day.
+    - cron: "0 13 * * *"
+    - cron: "0 14 * * *"
+  workflow_dispatch: {}   # the "Run workflow" button, for testing any time
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is it 8 AM in Chicago?
+        id: guard
+        run: |
+          H=$(TZ=America/Chicago date +%H)
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$H" = "08" ]; then
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=no" >> "$GITHUB_OUTPUT"
+            echo "Not 8 AM Chicago (it is ${H}:00) -- skipping this firing."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.go == 'yes'
+
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.go == 'yes'
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        if: steps.guard.outputs.go == 'yes'
+        run: pip install -r requirements.txt
+
+      - name: Refresh model + build today's report
+        if: steps.guard.outputs.go == 'yes'
+        env:
+          REPORT_DAYS: "1"
+        run: python daily_web.py
+
+      - name: Save updated data and publish the page
+        if: steps.guard.outputs.go == 'yes'
+        run: |
+          git config user.name  "cfb-model-bot"
+          git config user.email "cfb-model-bot@users.noreply.github.com"
+          git add data docs
+          git commit -m "Daily report: $(TZ=America/Chicago date '+%Y-%m-%d %H:%M %Z')" \
+            || echo "nothing changed today"
+          git push
