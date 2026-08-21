@@ -450,12 +450,20 @@ def build_results_section(graded, summary_text):
 
 
 def build_html(rows, meta, results_html=""):
+    # Layout per the owner's spec (2026-08-21): the page shows the market
+    # line, the simulated score, the straight-up Win %, and the model's own
+    # cover % for the spread and O/U sides it prefers -- and nothing else.
+    # No Call column, no NO BET machinery on the page. The percentages shown
+    # are the SIMULATOR'S estimates measured against the listed market
+    # number; the Results tab grades every locked pick against the closing
+    # line, so the season record -- not a pill -- is the running verdict on
+    # how much those percentages can be trusted. The call/gate machinery
+    # still runs underneath and is recorded in the ledger for analysis.
     head = """<tr>
 <th class="l">Game</th><th class="l">Kickoff</th><th>Status</th>
-<th>Away Pts</th><th>Home Pts</th><th>Est Total</th><th>Win Prob</th>
-<th class="sep">Model Line</th><th>Market Line</th><th>Edge</th><th>Model %</th><th>Adj %</th>
-<th class="sep">Spread Bet</th>
-<th class="sep">Market O/U</th><th>O/U Bet</th><th>Model %</th><th>Adj %</th><th class="sep">Call</th>
+<th>Sim Score</th><th>Win %</th>
+<th class="sep">Market Line</th><th>Spread Pick</th><th>Cover %</th>
+<th class="sep">Market O/U</th><th>O/U Pick</th><th>Cover %</th>
 </tr>"""
 
     body = []
@@ -471,25 +479,16 @@ def build_html(rows, meta, results_html=""):
         fav = r["home"] if wp >= 0.5 else r["away"]
         winprob = (f'{html.escape(fav)} {max(wp, 1-wp)*100:.0f}%')
         # LOCKED rows are in the immutable ledger and will be graded; PREVIEW
-        # rows are informational and get recorded on a later run nearer kickoff
-        # Call / data-quality flag. A NO BET repeated 200 times is not
-        # information (it is stated once in the header), so NO BET rows show
-        # a dim "ok"/"low conf" here. But any call that IS actionable must be
-        # visible per-row: AVOID (untrustworthy projection) always shows, and
-        # if the validation gate ever opens, PLAY / LEAN pills surface here
-        # automatically -- the call machinery runs on every row regardless.
+        # rows are informational and get recorded on a later run nearer
+        # kickoff. The call machinery (AVOID/PLAY/etc) still runs and is
+        # recorded in the ledger, but the page no longer renders it -- the
+        # one piece kept visible is a dim data-quality marker on games where
+        # the projection itself is unreliable (non-FBS opponent or newly
+        # promoted team), because that is a fact about the number shown.
         _conf = (r.get("spread_conf") or ("", ""))[0]
         _tconf = (r.get("total_conf") or ("", ""))[0]
-        if "AVOID" in (_conf, _tconf):
-            dataflag = '<span class="pill avoid">AVOID</span>'
-        elif "PLAY" in (_conf, _tconf):
-            which = "spread" if _conf == "PLAY" else "total"
-            dataflag = f'<span class="pill play">PLAY {which}</span>'
-        elif "LEAN" in (_conf, _tconf):
-            which = "spread" if _conf == "LEAN" else "total"
-            dataflag = f'<span class="pill lean">LEAN {which}</span>'
-        else:
-            dataflag = '<span class="dim">ok</span>'
+        lowflag = ('<br><span class="dim">low-data matchup</span>'
+                   if "AVOID" in (_conf, _tconf) else "")
 
         if r.get("locked"):
             lockcell = '<span class="pill play">LOCKED</span>'
@@ -498,43 +497,33 @@ def build_html(rows, meta, results_html=""):
             lockcell = ('<span class="pill nobet">preview</span>'
                         + (f'<br><span class="dim">{h:.0f}h out</span>'
                            if h is not None else ""))
-        ml = f'{r["home"]} {-p["mean_margin"]:+.1f}'
-        mk = (f'{r["home"]} {sp["market_line"]:+g}' if sp else '<span class="dim">no line</span>')
-        edge = f'{sp["edge"]:+.1f}' if sp else "-"
+
+        sim_score = (f'{p["exp_away"]:.1f} &ndash; {p["exp_home"]:.1f}'
+                     f'<br><span class="dim">total {p["total"]:.1f}</span>')
+        mk = (f'{r["home"]} {sp["market_line"]:+g}' if sp
+              else '<span class="dim">no line</span>')
 
         if sp:
             side = r["home"] if sp["pick"] == "HOME" else r["away"]
-            spread_bet = f'{html.escape(side)} {sp["market_line"] if sp["pick"]=="HOME" else -sp["market_line"]:+g}'
-            sp_wp = f'{sp.get("model_win_prob", sp["win_prob"])*100:.1f}%'
-            # THE DECISION NUMBER, in bold. sp["win_prob"] is the
-            # market-calibrated probability (currently 50.0% everywhere, and
-            # honestly so); the subtext is the 95%-lower-bound version. The
-            # simulator's own conviction (sp_wp / Model %) is context, never
-            # the number to act on -- an earlier layout bolded Model % and
-            # dropped this column entirely, which inverted the project's own
-            # first rule. See HOW_TO_USE.md.
-            sp_adj = (f'<b>{sp["win_prob"]*100:.1f}%</b>'
-                      f'<br><span class="dim">{sp.get("cons_prob",0.5)*100:.1f}% lo</span>')
+            spread_bet = (f'{html.escape(side)} '
+                          f'{sp["market_line"] if sp["pick"]=="HOME" else -sp["market_line"]:+g}')
+            sp_cov = f'<b>{sp.get("model_win_prob", sp["win_prob"])*100:.1f}%</b>'
         else:
-            spread_bet = sp_wp = sp_adj = '<span class="dim">-</span>'
+            spread_bet = sp_cov = '<span class="dim">-</span>'
 
         if to:
             ou_bet = f'{to["pick"]} {to["market_total"]:g}'
-            ou_wp = f'{to.get("model_win_prob", to["win_prob"])*100:.1f}%'
-            ou_adj = (f'<b>{to["win_prob"]*100:.1f}%</b>'
-                      f'<br><span class="dim">{to.get("cons_prob",0.5)*100:.1f}% lo</span>')
+            ou_cov = f'<b>{to.get("model_win_prob", to["win_prob"])*100:.1f}%</b>'
             mkt_tot = f'{to["market_total"]:g}'
         else:
-            ou_bet = ou_wp = ou_adj = mkt_tot = '<span class="dim">-</span>'
+            ou_bet = ou_cov = mkt_tot = '<span class="dim">-</span>'
 
         body.append(f"""<tr>
-<td class="l game">{game}</td><td class="l dim">{html.escape(str(r.get("kick","")))}</td>
+<td class="l game">{game}{lowflag}</td><td class="l dim">{html.escape(str(r.get("kick","")))}</td>
 <td>{lockcell}</td>
-<td>{p["exp_away"]:.1f}</td><td>{p["exp_home"]:.1f}</td><td><b>{p["total"]:.1f}</b></td>
-<td>{winprob}</td>
-<td class="sep">{ml}</td><td>{mk}</td><td>{edge}</td><td>{sp_wp}</td><td>{sp_adj}</td>
-<td class="sep">{spread_bet}</td>
-<td class="sep">{mkt_tot}</td><td>{ou_bet}</td><td>{ou_wp}</td><td>{ou_adj}</td><td class="sep">{dataflag}</td>
+<td>{sim_score}</td><td>{winprob}</td>
+<td class="sep">{mk}</td><td>{spread_bet}</td><td>{sp_cov}</td>
+<td class="sep">{mkt_tot}</td><td>{ou_bet}</td><td>{ou_cov}</td>
 </tr>""")
 
     m = meta
@@ -549,57 +538,34 @@ ratings fit on {m['n_train']} games through {m['through']}</div>
 {LG.record_strip_html(m.get('record'))}
 
 <div class="note">
-<b>Bet off Adj %, never Model %.</b> They answer different questions.
-<b>Model %</b> is the simulator's own conviction: <i>if this projection is
-right</i>, how often does that side cover? It tracks the Edge column (a
-5-point edge is about 63%, a 10-point edge about 73%).
-<b>Adj %</b> is that number after checking how often this model's
-disagreements with real closing lines have actually been right &mdash; the
-only number with money implications, shown in bold with its 95%-lower-bound
-underneath.<br>
-Right now <b>Adj % reads 50.0% on every row, and that is the measured
-answer, not a placeholder</b>: the fitted edge-vs-market relationship fails
-the validation gate (it exists in one season and not the other &mdash; the
-same signature as a look-ahead leak this project has already had twice), so
-the honest market-calibrated probability is a coin flip regardless of how
-large the raw edge looks. Exact current statistics live in
-data/calibration.json. If a future refit passes the gate, Adj % starts
-tracking the edge and PLAY/LEAN pills appear in the Call column &mdash; no
-code change required.<br><br>
-<b>The Call column</b> shows AVOID where the projection itself is unreliable
-&mdash; a non-FBS opponent (rated only against sparse cross-division data) or
-a newly promoted team &mdash; and PLAY/LEAN if the calibrated number ever
-clears the {BREAKEVEN_110:.2%} break-even. "ok" means NO BET, which is the
-correct call for a model competing with an efficient market.<br><br>
-<b>LOCKED vs preview.</b> A row marked <b>LOCKED</b> has been written to the
-permanent record and will be graded against the closing line once the game
-finishes. A <b>preview</b> row is not recorded yet: its kickoff is more than
-{m['lock_hours']:g} hours away, so the ratings have not seen the games in
-between and the line will still move. Re-run inside that window and it locks.
-This keeps the season-long record honest &mdash; it only ever contains
-predictions made with current information.<br><br>
-<b>Read this before betting.</b> Measured on ~1,800 games with real closing
-lines, this model's margin RMSE is {m['margin_rmse']:.2f} against the market's
-~15.1 &mdash; the closing line is still the more accurate number, and the gap
-is statistically unambiguous. The validated share of any model-vs-market
-disagreement is currently {m['shrink']:.0%}, so a 10-point gap is worth
-{10*m['shrink']:.1f} points of real edge.
-<b>No edge threshold has been shown to beat break-even.</b> Against-the-spread
-accuracy by edge band zigzags rather than trending, and every confidence
-interval contains the {BREAKEVEN_110:.2%} break-even at -110 juice.
-Treat <b>PLAY</b> as "the calibrated number clears break-even", not as a validated
-signal. Bet sizing should assume the true edge may be zero.
+<b>What the numbers are.</b> <b>Sim Score</b> is the average of
+{m['sims']:,} Monte Carlo simulations of this matchup. <b>Win %</b> is how
+often the named team wins those simulations outright. <b>Cover %</b> is how
+often the model's preferred side covers the listed market number
+(spread) or lands on the listed total (O/U), pushes excluded &mdash; the
+model's own estimate, measured against the real line shown.<br><br>
+<b>LOCKED vs preview.</b> A <b>LOCKED</b> row is written to the permanent
+record and gets graded against the closing line after the game; a
+<b>preview</b> row locks at a later update nearer kickoff (within
+{m['lock_hours']:g} hours), once the lines and lineups are final. The
+<b>Season Results</b> tab keeps the running scorecard of every locked pick
+&mdash; that graded record, not these percentages, is the proof of what the
+model can actually do. For reference, the market's closing line has
+historically been the more accurate predictor (margin RMSE
+{m['margin_rmse']:.2f} vs the market's ~15.1 on ~1,800 graded games), and
+{BREAKEVEN_110:.2%} is the win rate needed to profit at standard &minus;110
+pricing.
 </div>
 
 <div class="wrap"><table>{head}{''.join(body)}</table></div>
 {results_html}
 <footer>
-<b>Columns.</b> <code>Away/Home Pts</code> mean simulated score.
-<code>Est Total</code> is shrunk toward the league mean &mdash; unshrunk totals scored
+<b>Columns.</b> <code>Sim Score</code> is the mean simulated score, away &ndash; home;
+its <code>total</code> is shrunk toward the league mean &mdash; unshrunk totals scored
 worse than guessing the average.
-<code>Model Line</code> is quoted from the home side, same convention as the market.
-<code>Edge</code> = model margin &minus; market margin; positive favours the home side.
-<code>Win %</code> is the Monte Carlo probability that the named bet wins, excluding pushes.<br>
+<code>Market Line</code> is quoted from the home side, negative = home favoured.
+<code>Cover %</code> is the Monte Carlo probability that the named pick beats the
+listed market number, excluding pushes.<br>
 <b>Method.</b> Ridge-regularised opponent-adjusted offence/defence ratings
 (&lambda; and recency decay chosen by walk-forward cross-validation), simulated
 {m['sims']:,} times per game with a drive-based multinomial that reproduces real
