@@ -62,21 +62,53 @@ QB_ADJ_MAX = 9.0
 coach_new = set()
 
 
+# FAST MODE -- set by website builds (see run_report). ESPN rate-limits
+# GitHub's cloud servers, so there the injury/QB lookups are strictly
+# opportunistic: one attempt, short timeout, no retry sleeps, and after 8
+# consecutive failures a circuit breaker stops asking entirely. Worst case
+# the build spends under a minute discovering ESPN won't talk to it, then
+# runs exactly as it always has when no injury data is published. On a home
+# connection (desktop exe) nothing here changes.
+FAST_MODE = False
+_fail_streak = 0
+_BREAKER_AT = 8
+
+
+def set_fast_mode(on=True):
+    global FAST_MODE, _fail_streak
+    FAST_MODE = bool(on)
+    _fail_streak = 0
+
+
 def _get(url, tries=3, timeout=20):
+    global _fail_streak
+    if FAST_MODE:
+        if _fail_streak >= _BREAKER_AT:
+            return None
+        tries, timeout = 1, 6
     last = None
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                return json.load(r)
+                out = json.load(r)
+            _fail_streak = 0
+            return out
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                return None
+                return None          # a real answer, not a failure
             last = e
-            time.sleep(2 * (i + 1))
+            if not FAST_MODE:
+                time.sleep(2 * (i + 1))
         except Exception as e:  # noqa: BLE001
             last = e
-            time.sleep(2 * (i + 1))
+            if not FAST_MODE:
+                time.sleep(2 * (i + 1))
+    if FAST_MODE:
+        _fail_streak += 1
+        if _fail_streak == _BREAKER_AT:
+            print("    (ESPN is refusing this server -- skipping further "
+                  "injury/QB lookups this build)", flush=True)
     return None
 
 

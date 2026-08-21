@@ -85,17 +85,28 @@ def refresh_schedule_window(season, days, verbose=True):
     if not weeks:
         weeks = [1]
 
-    if verbose:
-        print(f"Refreshing schedule for week(s) {weeks} "
-              f"(games through {horizon.date()})...", flush=True)
-    conf_map = fetch_conference_map(season, os.path.join(DATA_DIR, "conferences.json"))
-    rows = []
-    for wk in weeks:
-        try:
-            raw, _ = fetch_week_cached(season, 2, wk, refresh=True)
-            rows += extract_games(raw, conf_map)
-        except Exception as e:  # noqa: BLE001
-            print(f"  ! week {wk}: {e}", flush=True)
+    import fetch_cfbd_live as CF
+    if CF.enabled():
+        # Website path: the whole season in one memoized CFBD call -- ESPN
+        # rate-limits GitHub's servers into hours of retry cooldowns, and a
+        # schedule refresh must never be the thing that makes a pre-kickoff
+        # build miss its game. The merge below is shared with the ESPN path.
+        rows = CF.season_games(season)
+        if verbose:
+            print(f"Refreshing schedule from CFBD: {len(rows)} games in one "
+                  f"call (window {horizon.date()})", flush=True)
+    else:
+        if verbose:
+            print(f"Refreshing schedule for week(s) {weeks} "
+                  f"(games through {horizon.date()})...", flush=True)
+        conf_map = fetch_conference_map(season, os.path.join(DATA_DIR, "conferences.json"))
+        rows = []
+        for wk in weeks:
+            try:
+                raw, _ = fetch_week_cached(season, 2, wk, refresh=True)
+                rows += extract_games(raw, conf_map)
+            except Exception as e:  # noqa: BLE001
+                print(f"  ! week {wk}: {e}", flush=True)
     if not rows:
         return base if base is not None else pd.DataFrame()
 
@@ -132,7 +143,19 @@ def select_games(sched, days=None, week=None):
         return s[s["week"] == week]
     now = dt.datetime.now(dt.timezone.utc)
     hi = now + dt.timedelta(days=days)
-    ts = pd.to_datetime(s["date"], errors="coerce", utc=True)
+    # Select on the KICKOFF INSTANT, not the bare date. `date` is the US
+    # Eastern game day and parses to midnight UTC, which sits 12-20 hours
+    # BEFORE any real kickoff on that day -- so the moment the clock passed
+    # 6h after midnight, the "not more than 6h started" lower bound silently
+    # dropped the entire same-day slate. (Caught by the end-to-end test on a
+    # simulated game day; no real game day had occurred since the date
+    # column switched to Eastern.) Rows with no kickoff timestamp fall back
+    # to end-of-day so a listed game is never dropped for a missing time.
+    kick = (pd.to_datetime(s["kickoff_utc"], errors="coerce", utc=True)
+            if "kickoff_utc" in s.columns
+            else pd.Series(pd.NaT, index=s.index))
+    day = pd.to_datetime(s["date"], errors="coerce", utc=True)
+    ts = kick.fillna(day + pd.Timedelta(hours=28))   # ~midnight Eastern
     return s[(ts >= now - dt.timedelta(hours=6)) & (ts <= hi)]
 
 
@@ -666,6 +689,19 @@ def main():
         shrink = 0.0
         tshrink = 0.0
 
+    # Website builds price every game from ONE CFBD lines call instead of an
+    # ESPN summary request per game (5 requests/game -> ~0). The explicit
+    # ESPN injury/QB check stays on but in fast-fail mode: from GitHub's
+    # rate-limited address space it must never stall the build -- it either
+    # answers quickly or the model runs without it, exactly as it already
+    # does whenever ESPN publishes nothing.
+    import fetch_cfbd_live as CF
+    cfbd_lines = None
+    if CF.enabled():
+        cfbd_lines = CF.lines_for_season(args.season)
+        PG.set_fast_mode(True)
+        print(f"Market lines from CFBD: {len(cfbd_lines)} games priced in one call")
+
     rows = []
     ledger_rows = []
     preview_rows = []
@@ -678,8 +714,12 @@ def main():
             continue
 
         eid = int(g["event_id"])
-        market = PG.get_market(eid) or {}
-        line = market.get("line")
+        if cfbd_lines is not None:
+            line = cfbd_lines.get(str(eid))
+            market = {"espn_predictor": None, "line": line}
+        else:
+            market = PG.get_market(eid) or {}
+            line = market.get("line")
 
         inj_h = PG.get_injuries(str(g.get("home_id")))
         inj_a = PG.get_injuries(str(g.get("away_id")))

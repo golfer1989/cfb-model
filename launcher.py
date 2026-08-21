@@ -84,22 +84,39 @@ def refresh_all(days):
 
 
 def _refresh_results():
-    """Pull any newly-completed games into real_games.csv."""
+    """Pull any newly-completed games into real_games.csv.
+
+    Two sources for the same rows:
+      * website builds (DATA_SOURCE=cfbd): one CFBD call covers the whole
+        season -- GitHub's servers are rate-limited to death by ESPN, and
+        CFBD is not (see fetch_cfbd_live's header for the measurements).
+        The merge below is IDENTICAL either way; only the fetch differs,
+        and the CFBD path refuses to merge until its selfcheck has proven
+        the event-id space matches.
+      * desktop (default): the ESPN weekly scoreboards, unchanged.
+    """
     import pandas as pd
-    import fetch_espn_data as F
     from paths import DATA_DIR
 
     from paths import current_cfb_season
     season = current_cfb_season()
     path = os.path.join(DATA_DIR, "real_games.csv")
-    conf = F.fetch_conference_map(season, os.path.join(DATA_DIR, "conferences.json"))
-    rows = []
-    for wk in range(1, 18):
-        try:
-            raw, _ = F.fetch_week_cached(season, 2, wk, refresh=True)
-        except Exception:  # noqa: BLE001
-            continue
-        rows += F.extract_games(raw, conf)
+
+    import fetch_cfbd_live as CF
+    if CF.enabled():
+        if not CF.selfcheck():
+            return "CFBD selfcheck FAILED -- not merging; see data/cfbd_selfcheck.txt"
+        rows = CF.season_games(season)
+    else:
+        import fetch_espn_data as F
+        conf = F.fetch_conference_map(season, os.path.join(DATA_DIR, "conferences.json"))
+        rows = []
+        for wk in range(1, 18):
+            try:
+                raw, _ = F.fetch_week_cached(season, 2, wk, refresh=True)
+            except Exception:  # noqa: BLE001
+                continue
+            rows += F.extract_games(raw, conf)
     if not rows:
         return "no new games"
     fresh = pd.DataFrame(rows).drop_duplicates("event_id")
@@ -109,9 +126,19 @@ def _refresh_results():
         return "season not started; nothing to add"
 
     base = pd.read_csv(path)
+    # event_id must be compared as STRINGS on both sides: the CSV reads back
+    # as int64 while both fetchers produce strings, and an unnormalized isin()
+    # matches nothing -- every already-stored final would be appended again on
+    # every run, silently double-counting games in the ratings. Same defect
+    # class as the schedule-doubling bug documented in run_report's
+    # refresh_schedule_window; the dedupe is belt-and-braces on top.
+    base["event_id"] = base["event_id"].astype(str)
+    done = done.copy()
+    done["event_id"] = done["event_id"].astype(str)
     keep = base[~base["event_id"].isin(done["event_id"])]
     cols = [c for c in base.columns if c in done.columns]
-    merged = pd.concat([keep, done[cols]], ignore_index=True).sort_values("date")
+    merged = pd.concat([keep, done[cols]], ignore_index=True)
+    merged = merged.drop_duplicates("event_id", keep="last").sort_values("date")
     merged.to_csv(path, index=False)
     added = len(merged) - len(base)
     return f"{len(done)} final {season} games ({added} new)"
@@ -146,6 +173,14 @@ def _refresh_team_stats():
     import fetch_team_stats as T
     from paths import DATA_DIR
     import pandas as pd
+
+    # Website builds skip this step entirely: team_stats.csv feeds only the
+    # desktop matchup/style readout (run_report never loads it), CFBD has no
+    # equivalent of ESPN's byteam endpoint, and ESPN refuses GitHub's IPs --
+    # so on the website this fetch could only ever waste minutes to fail.
+    import fetch_cfbd_live as CF
+    if CF.enabled():
+        return "skipped on website builds (desktop-only input; report unaffected)"
 
     path = os.path.join(DATA_DIR, "team_stats.csv")
     old = pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()

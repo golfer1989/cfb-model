@@ -156,6 +156,7 @@ def grade(verbose=True):
     """
     import fetch_odds as FO
     from fetch_espn_data import fetch_week_cached, extract_games, fetch_conference_map
+    import fetch_cfbd_live as CF
 
     df = _load()
     if df.empty:
@@ -166,11 +167,21 @@ def grade(verbose=True):
             print("  nothing new to grade")
         return df, 0
 
-    # pull final scores for the seasons/weeks represented among ungraded rows
+    # pull final scores for the seasons/weeks represented among ungraded rows.
+    # Website builds (DATA_SOURCE=cfbd) get finals AND closing lines for a
+    # whole season in ~4 CFBD calls; the desktop path keeps ESPN, unchanged.
+    use_cfbd = CF.enabled()
     finals = {}
+    cfbd_closing = {}
     conf_cache = os.path.join(DATA_DIR, "conferences.json")
     for season in sorted(open_rows["season"].dropna().unique()):
         season = int(season)
+        if use_cfbd:
+            for gm in CF.season_games(season):
+                if gm["status"] == "STATUS_FINAL":
+                    finals[str(gm["event_id"])] = gm
+            cfbd_closing.update(CF.lines_for_grading(season))
+            continue
         try:
             cmap = fetch_conference_map(season, conf_cache)
         except Exception:  # noqa: BLE001
@@ -196,20 +207,28 @@ def grade(verbose=True):
         fh, fa = float(gm["home_score"]), float(gm["away_score"])
         margin, total = fh - fa, fh + fa
 
-        # closing line for this event
+        # closing line for this event. On the website the CFBD line for a
+        # completed game IS the closing number (the feed stops moving at
+        # kickoff); the desktop path asks ESPN's odds endpoint as before.
         close_sp = close_tot = np.nan
-        try:
-            data, _ = FO.fetch_event_odds(int(eid), refresh=True)
-            rec = FO.parse_odds(data, int(eid))
+        if use_cfbd:
+            rec = cfbd_closing.get(eid)
             if rec:
-                close_sp = rec.get("spread_close_home")
-                if close_sp is None:
-                    close_sp = rec.get("spread_current")
-                close_tot = rec.get("total_close")
-                if close_tot is None:
-                    close_tot = rec.get("total_current")
-        except Exception:  # noqa: BLE001
-            pass
+                close_sp = rec.get("spread_home")
+                close_tot = rec.get("total")
+        else:
+            try:
+                data, _ = FO.fetch_event_odds(int(eid), refresh=True)
+                rec = FO.parse_odds(data, int(eid))
+                if rec:
+                    close_sp = rec.get("spread_close_home")
+                    if close_sp is None:
+                        close_sp = rec.get("spread_current")
+                    close_tot = rec.get("total_close")
+                    if close_tot is None:
+                        close_tot = rec.get("total_current")
+            except Exception:  # noqa: BLE001
+                pass
         # fall back to the line captured at prediction time
         if close_sp is None or (isinstance(close_sp, float) and np.isnan(close_sp)):
             close_sp = row["line_spread_home"]
