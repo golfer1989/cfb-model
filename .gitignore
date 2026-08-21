@@ -4,7 +4,6 @@ dist/
 build/
 *.exe
 _internal/
-data/raw_cache/
 data/cfbd_key.txt
 data/report*.html
 data/wk1_pregame.json
