@@ -1,0 +1,10 @@
+CFBD compatibility selfcheck 2026-08-21 16:26 UTC -- PASS
+sample season 2025: 934 ESPN-era games, 3831 from CFBD, 934 joined on event_id
+event_id overlap : 100.0%  (need >=80%)
+home name match  : 100.0%  (need >=90%)
+home score match : 100.0%  (need >=98%)
+team id match    : 100.0%  (informational)
+conference match : 100.0%  (informational)
+closing-spread agreement (±3 pts, n=200): 100.0%
+formatted-vs-numeric sign disagreements seen: 0
+
