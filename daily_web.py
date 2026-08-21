@@ -32,7 +32,12 @@ if os.path.exists(report):
     os.remove(report)  # so a fresh write is detectable
 
 print("=== daily_web: building the report ===")
-sys.argv = ["run_report.py", "--days", str(DAYS)]
+# Lock window: on the website, builds fire ~45-75 min before each kickoff
+# wave, so a short window means picks enter the permanent ledger WITH the
+# final injury/QB information -- exactly what the ledger's own docstring
+# wants. Earlier runs of the day show those games as previews instead.
+lock_hours = os.environ.get("REPORT_LOCK_HOURS", "3")
+sys.argv = ["run_report.py", "--days", str(DAYS), "--lock-hours", lock_hours]
 RR.main()
 
 os.makedirs(DOCS, exist_ok=True)
