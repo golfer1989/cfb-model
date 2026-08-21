@@ -2,12 +2,9 @@ name: Daily CFB report
 
 on:
   schedule:
-    # Two UTC firings so 8:00 AM America/Chicago is hit in BOTH daylight
-    # saving (13:00 UTC) and standard time (14:00 UTC). The guard step below
-    # lets exactly one of them proceed each day.
-    - cron: "0 13 * * *"
-    - cron: "0 14 * * *"
-  workflow_dispatch: {}   # the "Run workflow" button, for testing any time
+    - cron: "*/30 13-23 * * *"
+    - cron: "*/30 0-3 * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -21,19 +18,46 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
-      - name: Is it 8 AM in Chicago?
+      - uses: actions/checkout@v4
+
+      - name: Should this firing build?
         id: guard
         run: |
-          H=$(TZ=America/Chicago date +%H)
-          if [ "${{ github.event_name }}" != "schedule" ] || [ "$H" = "08" ]; then
-            echo "go=yes" >> "$GITHUB_OUTPUT"
-          else
-            echo "go=no" >> "$GITHUB_OUTPUT"
-            echo "Not 8 AM Chicago (it is ${H}:00) -- skipping this firing."
-          fi
-
-      - uses: actions/checkout@v4
-        if: steps.guard.outputs.go == 'yes'
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import csv, os, datetime as dt
+          from zoneinfo import ZoneInfo
+          CT = ZoneInfo("America/Chicago")
+          now = dt.datetime.now(dt.timezone.utc)
+          now_ct = now.astimezone(CT)
+          manual = os.environ.get("GITHUB_EVENT_NAME") != "schedule"
+          # 8am CT run: grades yesterday, refreshes Results, previews today
+          morning = now_ct.hour == 8 and now_ct.minute < 15
+          # pre-wave run: some game kicks off 45-75 min from now, so this
+          # build FINISHES ~an hour before it with final lines and injuries
+          prewave = False
+          try:
+              with open("data/schedule_2026.csv") as f:
+                  for r in csv.DictReader(f):
+                      if r.get("status") == "STATUS_FINAL":
+                          continue
+                      try:
+                          t = dt.datetime.strptime(
+                              r.get("kickoff_utc") or "",
+                              "%Y-%m-%dT%H:%MZ").replace(tzinfo=dt.timezone.utc)
+                      except ValueError:
+                          continue
+                      mins = (t - now).total_seconds() / 60
+                      if 45 < mins <= 75:
+                          prewave = True
+                          break
+          except FileNotFoundError:
+              pass
+          go = manual or morning or prewave
+          why = ("manual" if manual else "morning" if morning
+                 else "pre-kickoff" if prewave else "off-cycle")
+          print(f"go={'yes' if go else 'no'}")
+          print(f"why={why}")
+          EOF
 
       - uses: actions/setup-python@v5
         if: steps.guard.outputs.go == 'yes'
@@ -48,6 +72,7 @@ jobs:
         if: steps.guard.outputs.go == 'yes'
         env:
           REPORT_DAYS: "1"
+          REPORT_LOCK_HOURS: "3"
         run: python daily_web.py
 
       - name: Save updated data and publish the page
@@ -56,6 +81,10 @@ jobs:
           git config user.name  "cfb-model-bot"
           git config user.email "cfb-model-bot@users.noreply.github.com"
           git add data docs
-          git commit -m "Daily report: $(TZ=America/Chicago date '+%Y-%m-%d %H:%M %Z')" \
-            || echo "nothing changed today"
+          git commit -m "Report (${{ steps.guard.outputs.why }}): $(TZ=America/Chicago date '+%Y-%m-%d %H:%M %Z')" \
+            || echo "nothing changed"
           git push
+
+      - name: Note skipped firing
+        if: steps.guard.outputs.go != 'yes'
+        run: echo "Off-cycle check - no build needed right now."
