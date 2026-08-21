@@ -413,8 +413,7 @@ def _gauge_tile(label, w, l, push, pct, roi, breakeven):
         return f"""<div class="rs-tile"><div class="rs-k">{label}</div>
 <div class="rs-v rs-dim">0&ndash;0</div>
 <div class="rs-n rs-dim">no graded picks yet</div>
-<div class="rs-track"><span class="rs-tick" style="left:{be_pct:.2f}%"></span></div>
-<div class="rs-be">break-even {be_pct:.1f}%</div></div>"""
+<div class="rs-track"><span class="rs-tick" style="left:{be_pct:.2f}%"></span></div></div>"""
     pctv = pct * 100
     arrow = "&#9650;" if pct >= breakeven else "&#9660;"
     acls = "rs-up" if pct >= breakeven else "rs-down"
@@ -425,8 +424,7 @@ def _gauge_tile(label, w, l, push, pct, roi, breakeven):
 <div class="rs-v">{pctv:.1f}% <span class="{acls}">{arrow}</span></div>
 <div class="rs-n">{w}&ndash;{l}{pushtxt}{roitxt}</div>
 <div class="rs-track"><span class="rs-fill" style="width:{min(pctv,100):.2f}%"></span>
-<span class="rs-tick" style="left:{be_pct:.2f}%"></span></div>
-<div class="rs-be">break-even {be_pct:.1f}%</div></div>"""
+<span class="rs-tick" style="left:{be_pct:.2f}%"></span></div></div>"""
 
 
 def record_strip_html(summary=None, breakeven=0.5238):

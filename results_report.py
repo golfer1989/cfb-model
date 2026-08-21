@@ -230,13 +230,20 @@ def main():
 
     if not len(graded):
         pending = int(led["graded_at"].isna().sum())
+        # Lock-window text must match the lock window actually in force, not a
+        # hardcoded number. The website's workflow exports REPORT_LOCK_HOURS=3
+        # (builds fire 45-75 min before each kickoff wave, so picks lock 1-3h
+        # out with final injury/QB info); the desktop exe sets no env var and
+        # keeps the 30-hour default, where one morning run covers the slate.
+        # Same variable daily_web.py reads, so this page can never disagree.
+        lock_h = float(os.environ.get("REPORT_LOCK_HOURS", "30"))
         print("\nNo completed games on record yet.")
         if pending:
             print(f"  {pending} prediction(s) are locked and waiting for their games "
                   f"to finish.")
         else:
-            print("  Run CFB_Report.exe first -- it locks predictions within 30 hours")
-            print("  of kickoff, and those are what get graded here.")
+            print(f"  Run CFB_Report.exe first -- it locks predictions within "
+                  f"{lock_h:g} hours of kickoff, and those are what get graded here.")
         # still write the page (the website needs a Results tab on day zero):
         # empty strip + an honest explanation instead of a dead link
         out = args.out or os.path.join(DATA_DIR, "results.html")
@@ -248,7 +255,7 @@ def main():
 {LG.record_strip_html(LG.summarize(led))}
 <div class="sub">No completed games on record yet.
 {f"{pending} locked prediction(s) are waiting for their games to finish." if pending else
-"Picks lock automatically within 30 hours of kickoff; graded results appear here the morning after they play."}</div>""")
+f"Picks lock automatically once kickoff is within {lock_h:g} hours; graded results appear here the morning after they play."}</div>""")
         print(f"Wrote {out} (empty-state page)")
         return 0
 
