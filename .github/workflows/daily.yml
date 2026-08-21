@@ -3,7 +3,7 @@ name: Daily CFB report
 on:
   schedule:
     - cron: "*/30 13-23 * * *"
-    - cron: "*/30 0-3 * * *"
+    - cron: "*/30 0-5 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -32,13 +32,26 @@ jobs:
           manual = os.environ.get("GITHUB_EVENT_NAME") != "schedule"
           # 8am CT run: grades yesterday, refreshes Results, previews today
           morning = now_ct.hour == 8 and now_ct.minute < 15
-          # pre-wave run: some game kicks off 45-75 min from now, so this
-          # build FINISHES ~an hour before it with final lines and injuries
+          # pre-kickoff run: some game kicks off within 35 minutes and its
+          # pick is NOT yet locked in the ledger. Builds take ~2-4 min, so
+          # picks land 15-35 min before kickoff with near-closing lines.
+          # Keying on "still unlocked" (instead of a fixed time window)
+          # means a delayed firing self-heals: the next check still builds
+          # and locks the game rather than letting the wave slip through.
+          locked = set()
+          try:
+              with open("data/ledger.csv") as f:
+                  for r in csv.DictReader(f):
+                      locked.add(str(r.get("event_id") or "").strip())
+          except FileNotFoundError:
+              pass
           prewave = False
           try:
               with open("data/schedule_2026.csv") as f:
                   for r in csv.DictReader(f):
                       if r.get("status") == "STATUS_FINAL":
+                          continue
+                      if str(r.get("event_id") or "").strip() in locked:
                           continue
                       try:
                           t = dt.datetime.strptime(
@@ -47,7 +60,7 @@ jobs:
                       except ValueError:
                           continue
                       mins = (t - now).total_seconds() / 60
-                      if 45 < mins <= 75:
+                      if 0 < mins <= 35:
                           prewave = True
                           break
           except FileNotFoundError:
