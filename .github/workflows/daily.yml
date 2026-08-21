@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +63,7 @@ jobs:
         if: steps.guard.outputs.go == 'yes'
         with:
           python-version: "3.13"
+          cache: "pip"
 
       - name: Install dependencies
         if: steps.guard.outputs.go == 'yes'
@@ -73,6 +74,8 @@ jobs:
         env:
           REPORT_DAYS: "1"
           REPORT_LOCK_HOURS: "3"
+          DATA_SOURCE: cfbd
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
         run: python daily_web.py
 
       - name: Save updated data and publish the page
