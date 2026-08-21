@@ -374,3 +374,110 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------------------
+# Shared website chrome: nav tabs + the season-record strip
+# ---------------------------------------------------------------------------
+# These live here (rather than in run_report / results_report) because ledger
+# is the one module both pages already import, and the record they visualize
+# IS this file's summarize(). Both emit self-contained scoped <style> blocks
+# that lean only on the CSS variables both pages define identically
+# (--bg/--card/--fg/--muted/--line/--pos/--neg/--accent).
+
+def site_nav_html(active="report"):
+    """Two-tab site navigation. active: 'report' | 'results'."""
+    def tab(href, label, key):
+        cls = "sn-tab sn-on" if key == active else "sn-tab"
+        return f'<a class="{cls}" href="{href}">{label}</a>'
+    return f"""<style>
+.sn-nav{{display:flex;gap:8px;margin:0 0 16px}}
+.sn-tab{{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;
+text-decoration:none;color:var(--muted);background:var(--card);
+border:1px solid var(--line)}}
+.sn-tab:hover{{color:var(--fg)}}
+.sn-on{{color:var(--bg);background:var(--accent);border-color:var(--accent)}}
+</style>
+<nav class="sn-nav">{tab('index.html', "Today's Report", 'report')}
+{tab('results.html', 'Season Results', 'results')}</nav>"""
+
+
+def _gauge_tile(label, w, l, push, pct, roi, breakeven):
+    """One record tile: headline win%, W-L-P + ROI subline, and a 0-100%
+    gauge with a tick at the break-even line. The gauge (not a pie) is the
+    honest form here: a betting record lives near 50/50 all season, and the
+    only visual question that matters is which side of break-even it sits on."""
+    n = w + l
+    be_pct = breakeven * 100
+    if n == 0:
+        return f"""<div class="rs-tile"><div class="rs-k">{label}</div>
+<div class="rs-v rs-dim">0&ndash;0</div>
+<div class="rs-n rs-dim">no graded picks yet</div>
+<div class="rs-track"><span class="rs-tick" style="left:{be_pct:.2f}%"></span></div>
+<div class="rs-be">break-even {be_pct:.1f}%</div></div>"""
+    pctv = pct * 100
+    arrow = "&#9650;" if pct >= breakeven else "&#9660;"
+    acls = "rs-up" if pct >= breakeven else "rs-down"
+    pushtxt = f"&ndash;{push}" if push else ""
+    # roi=None means "not a -110 bet" (straight-up winner picks have no juice)
+    roitxt = f" &middot; ROI {roi*100:+.1f}% at &minus;110" if roi is not None else ""
+    return f"""<div class="rs-tile"><div class="rs-k">{label}</div>
+<div class="rs-v">{pctv:.1f}% <span class="{acls}">{arrow}</span></div>
+<div class="rs-n">{w}&ndash;{l}{pushtxt}{roitxt}</div>
+<div class="rs-track"><span class="rs-fill" style="width:{min(pctv,100):.2f}%"></span>
+<span class="rs-tick" style="left:{be_pct:.2f}%"></span></div>
+<div class="rs-be">break-even {be_pct:.1f}%</div></div>"""
+
+
+def record_strip_html(summary=None, breakeven=0.5238):
+    """The season-record strip both pages show at the top.
+
+    Three tiles: spread picks, over/under picks, straight-up winners --
+    every locked pick counts, graded against the closing line, accumulating
+    automatically as `grade()` fills the ledger in each morning's run.
+    """
+    s = summary if summary is not None else summarize()
+    sp = s.get("spread_all") or {}
+    to = s.get("total_all") or {}
+    su = s.get("straight_up") or {}
+    css = """<style>
+.rs-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+gap:12px;margin:0 0 18px}
+.rs-tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
+padding:12px 14px}
+.rs-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--muted);margin-bottom:2px}
+.rs-v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.rs-n{font-size:12px;color:var(--muted);margin:2px 0 10px;
+font-variant-numeric:tabular-nums}
+.rs-track{position:relative;height:8px;border-radius:4px;background:var(--line)}
+.rs-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
+background:var(--accent)}
+.rs-tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);
+opacity:.65}
+.rs-be{font-size:10.5px;color:var(--muted);margin-top:5px}
+.rs-up{color:var(--pos);font-size:14px}
+.rs-down{color:var(--neg);font-size:14px}
+.rs-dim{color:var(--muted)}
+</style>"""
+    tiles = (
+        _gauge_tile("Spread picks", sp.get("w", 0), sp.get("l", 0),
+                    sp.get("push", 0), sp.get("pct", 0.0), sp.get("roi", 0.0),
+                    breakeven)
+        + _gauge_tile("Over / Under picks", to.get("w", 0), to.get("l", 0),
+                      to.get("push", 0), to.get("pct", 0.0), to.get("roi", 0.0),
+                      breakeven)
+        + _gauge_tile("Straight-up winner", su.get("w", 0),
+                      (su.get("n", 0) - su.get("w", 0)) if su else 0, 0,
+                      su.get("pct", 0.0), None, 0.5)
+    )
+    n = s.get("n_graded", 0)
+    sub = (f'<div class="rs-be" style="margin:-12px 0 16px">Every locked pick '
+           f'counts &mdash; graded against the closing line over {n} finished '
+           f'game{"s" if n != 1 else ""}. The tick is the &minus;110 '
+           f'break-even; above it a record makes money, below it it loses.</div>'
+           if n else
+           '<div class="rs-be" style="margin:-12px 0 16px">The record begins '
+           'automatically when the first locked picks are graded after their '
+           'games finish.</div>')
+    return css + f'<div class="rs-strip">{tiles}</div>' + sub

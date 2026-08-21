@@ -55,3 +55,17 @@ h1{{font-size:22px}} .dim{{color:#5b636d}}</style>
 next {DAYS} day(s). This page rebuilds automatically every morning at
 8:00 AM Central; the next slate will appear here the morning it plays.</p>""")
     print("No games today -> published placeholder page")
+
+# ---- Results tab: grade + publish the season-record page -------------------
+print("=== daily_web: building the results page ===")
+sys.argv = ["results_report.py"]           # grades any newly finished games
+import results_report as RES
+try:
+    RES.main()
+except Exception as e:  # noqa: BLE001
+    print(f"  results page failed ({type(e).__name__}: {str(e)[:80]}) -- "
+          f"keeping the previous one")
+res = os.path.join(DATA_DIR, "results.html")
+if os.path.exists(res):
+    shutil.copyfile(res, os.path.join(DOCS, "results.html"))
+    print("Published season results -> docs/results.html")

@@ -517,10 +517,13 @@ def build_html(rows, meta, results_html=""):
     m = meta
     return f"""<title>CFB Model Report</title>
 <style>{CSS}</style>
+{LG.site_nav_html('report')}
 <h1>College Football Model Report</h1>
 <div class="sub">Generated {html.escape(m['generated'])} &middot;
 {m['n_games']} games &middot; {m['n_priced']} with a market line &middot;
 ratings fit on {m['n_train']} games through {m['through']}</div>
+
+{LG.record_strip_html(m.get('record'))}
 
 <div class="note">
 <b>Bet off Adj %, never Model %.</b> They answer different questions.
@@ -829,6 +832,7 @@ def main():
         "calibrated": calibrated,
         "shrink_n": shrink_info.get("n"),
         "lock_hours": args.lock_hours,
+        "record": LG.summarize(),
     }
     # completed games + running record, so the report becomes a season-long
     # scorecard rather than a snapshot

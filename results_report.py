@@ -101,10 +101,10 @@ def build_html(graded, summ, week=None):
         cards.append(f"""<div class="card"><div class="k">Straight up</div>
 <div class="v">{su['w']}-{su['n']-su['w']}</div>
 <div class="n">{su['pct']*100:.1f}%<br>95% CI [{su['lo']*100:.1f}, {su['hi']*100:.1f}]</div></div>""")
-    cards.append(_rec_card("ATS &mdash; all", summ.get("spread_all")))
-    cards.append(_rec_card("ATS &mdash; PLAY/LEAN", summ.get("spread_recommended")))
-    cards.append(_rec_card("O/U &mdash; all", summ.get("total_all")))
-    cards.append(_rec_card("O/U &mdash; PLAY/LEAN", summ.get("total_recommended")))
+    # the all-picks records now live in the visual strip up top; the cards
+    # keep what the strip does not show
+    cards.append(_rec_card("ATS &mdash; PLAY/LEAN only", summ.get("spread_recommended")))
+    cards.append(_rec_card("O/U &mdash; PLAY/LEAN only", summ.get("total_recommended")))
 
     acc = ""
     if "margin_rmse" in summ:
@@ -179,7 +179,9 @@ not as proof either way.</div>"""
     scope = f"Week {week}" if week else "Season to date"
     return f"""<title>CFB Results</title>
 <style>{CSS}</style>
+{LG.site_nav_html('results')}
 <h1>College Football Model &mdash; Results</h1>
+{LG.record_strip_html(summ)}
 <div class="sub">{scope} &middot; {len(graded)} completed games &middot;
 generated {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}</div>
 
@@ -235,6 +237,19 @@ def main():
         else:
             print("  Run CFB_Report.exe first -- it locks predictions within 30 hours")
             print("  of kickoff, and those are what get graded here.")
+        # still write the page (the website needs a Results tab on day zero):
+        # empty strip + an honest explanation instead of a dead link
+        out = args.out or os.path.join(DATA_DIR, "results.html")
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(f"""<title>CFB Model &mdash; Results</title>
+<style>{CSS}</style>
+{LG.site_nav_html('results')}
+<h1>College Football Model &mdash; Results</h1>
+{LG.record_strip_html(LG.summarize(led))}
+<div class="sub">No completed games on record yet.
+{f"{pending} locked prediction(s) are waiting for their games to finish." if pending else
+"Picks lock automatically within 30 hours of kickoff; graded results appear here the morning after they play."}</div>""")
+        print(f"Wrote {out} (empty-state page)")
         return 0
 
     graded = graded.sort_values("kickoff", ascending=False)
