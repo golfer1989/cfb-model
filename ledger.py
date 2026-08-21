@@ -156,7 +156,11 @@ def grade(verbose=True):
     """
     import fetch_odds as FO
     from fetch_espn_data import fetch_week_cached, extract_games, fetch_conference_map
-    import fetch_cfbd_live as CF
+    try:
+        import fetch_cfbd_live as CF
+    except ImportError:      # frozen build without the module -> ESPN path
+        class CF:
+            enabled = staticmethod(lambda: False)
 
     df = _load()
     if df.empty:

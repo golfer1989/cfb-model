@@ -102,7 +102,11 @@ def _refresh_results():
     season = current_cfb_season()
     path = os.path.join(DATA_DIR, "real_games.csv")
 
-    import fetch_cfbd_live as CF
+    try:
+        import fetch_cfbd_live as CF
+    except ImportError:      # frozen build without the module -> ESPN path
+        class CF:
+            enabled = staticmethod(lambda: False)
     if CF.enabled():
         if not CF.selfcheck():
             return "CFBD selfcheck FAILED -- not merging; see data/cfbd_selfcheck.txt"
@@ -178,7 +182,11 @@ def _refresh_team_stats():
     # desktop matchup/style readout (run_report never loads it), CFBD has no
     # equivalent of ESPN's byteam endpoint, and ESPN refuses GitHub's IPs --
     # so on the website this fetch could only ever waste minutes to fail.
-    import fetch_cfbd_live as CF
+    try:
+        import fetch_cfbd_live as CF
+    except ImportError:      # frozen build without the module -> ESPN path
+        class CF:
+            enabled = staticmethod(lambda: False)
     if CF.enabled():
         return "skipped on website builds (desktop-only input; report unaffected)"
 

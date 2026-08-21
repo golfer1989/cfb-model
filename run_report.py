@@ -85,7 +85,11 @@ def refresh_schedule_window(season, days, verbose=True):
     if not weeks:
         weeks = [1]
 
-    import fetch_cfbd_live as CF
+    try:
+        import fetch_cfbd_live as CF
+    except ImportError:      # frozen build without the module -> ESPN path
+        class CF:
+            enabled = staticmethod(lambda: False)
     if CF.enabled():
         # Website path: the whole season in one memoized CFBD call -- ESPN
         # rate-limits GitHub's servers into hours of retry cooldowns, and a
@@ -661,7 +665,11 @@ def main():
     # rate-limited address space it must never stall the build -- it either
     # answers quickly or the model runs without it, exactly as it already
     # does whenever ESPN publishes nothing.
-    import fetch_cfbd_live as CF
+    try:
+        import fetch_cfbd_live as CF
+    except ImportError:      # frozen build without the module -> ESPN path
+        class CF:
+            enabled = staticmethod(lambda: False)
     cfbd_lines = None
     if CF.enabled():
         cfbd_lines = CF.lines_for_season(args.season)
