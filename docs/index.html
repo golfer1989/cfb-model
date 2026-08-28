@@ -1,9 +1,357 @@
-<!doctype html><meta charset="utf-8">
 <title>CFB Model Report</title>
-<style>body{font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;
-max-width:640px;margin:15vh auto;padding:0 24px;color:#16191d}
-h1{font-size:22px} .dim{color:#5b636d}</style>
-<h1>No college football games today</h1>
-<p class="dim">Checked Friday, August 21, 2026. The model found no games kicking off in the
-next 1 day(s). This page rebuilds automatically every morning at
-8:00 AM Central; the next slate will appear here the morning it plays.</p>
+<style>
+:root{--bg:#ffffff;--fg:#16191d;--muted:#5b636d;--line:#e3e6ea;--card:#f7f8fa;
+--pos:#0a7d3f;--neg:#b3261e;--warn:#8a6100;--accent:#1a4f8a;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#0f1216;--fg:#e8eaed;--muted:#9aa3ad;--line:#272c33;--card:#161a20;
+--pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--accent:#7fb2ee;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.note{background:var(--card);border-left:3px solid var(--warn);padding:12px 14px;
+border-radius:4px;margin-bottom:20px;font-size:13px;color:var(--fg)}
+.note b{color:var(--warn)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-variant-numeric:tabular-nums}
+th{background:var(--card);text-align:right;padding:9px 10px;font-size:11px;
+text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+th.l,td.l{text-align:left}
+td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--card)}
+.game{font-weight:600}
+.dim{color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.play{background:rgba(10,125,63,.14);color:var(--pos)}
+.lean{background:rgba(138,97,0,.16);color:var(--warn)}
+.nobet{background:rgba(120,120,120,.16);color:var(--muted)}
+.avoid{background:rgba(179,38,30,.14);color:var(--neg)}
+.sep{border-left:2px solid var(--line)}
+footer{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.7}
+h2{font-size:16px;margin:30px 0 4px}
+.rec{background:var(--card);border:1px solid var(--line);border-radius:6px;
+padding:12px 14px;margin:10px 0 16px;font-size:13px;line-height:1.8;
+white-space:pre-wrap;font-variant-numeric:tabular-nums}
+.win{color:var(--pos);font-weight:600}
+.loss{color:var(--neg);font-weight:600}
+.pushr{color:var(--muted);font-weight:600}
+code{background:var(--card);padding:1px 5px;border-radius:3px}
+</style>
+<style>
+.sn-nav{display:flex;gap:8px;margin:0 0 16px}
+.sn-tab{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;
+text-decoration:none;color:var(--muted);background:var(--card);
+border:1px solid var(--line)}
+.sn-tab:hover{color:var(--fg)}
+.sn-on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+</style>
+<nav class="sn-nav"><a class="sn-tab sn-on" href="index.html">Today's Report</a>
+<a class="sn-tab" href="results.html">Season Results</a></nav>
+<h1>College Football Model Report</h1>
+<div class="sub">Generated 2026-08-28 21:58 &middot;
+38 games &middot; 18 with a market line &middot;
+ratings fit on 2812 games through 2026</div>
+
+<style>
+.rs-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+gap:12px;margin:0 0 18px}
+.rs-tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
+padding:12px 14px}
+.rs-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--muted);margin-bottom:2px}
+.rs-v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.rs-n{font-size:12px;color:var(--muted);margin:2px 0 10px;
+font-variant-numeric:tabular-nums}
+.rs-track{position:relative;height:8px;border-radius:4px;background:var(--line)}
+.rs-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
+background:var(--accent)}
+.rs-tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);
+opacity:.65}
+.rs-be{font-size:10.5px;color:var(--muted);margin-top:5px}
+.rs-up{color:var(--pos);font-size:14px}
+.rs-down{color:var(--neg);font-size:14px}
+.rs-dim{color:var(--muted)}
+</style><div class="rs-strip"><div class="rs-tile"><div class="rs-k">Spread picks</div>
+<div class="rs-v rs-dim">0&ndash;0</div>
+<div class="rs-n rs-dim">no graded picks yet</div>
+<div class="rs-track"><span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Over / Under picks</div>
+<div class="rs-v rs-dim">0&ndash;0</div>
+<div class="rs-n rs-dim">no graded picks yet</div>
+<div class="rs-track"><span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Straight-up winner</div>
+<div class="rs-v rs-dim">0&ndash;0</div>
+<div class="rs-n rs-dim">no graded picks yet</div>
+<div class="rs-track"><span class="rs-tick" style="left:50.00%"></span></div></div></div><div class="rs-be" style="margin:-12px 0 16px">The record begins automatically when the first locked picks are graded after their games finish.</div>
+
+<div class="note">
+<b>What the numbers are.</b> <b>Sim Score</b> is the average of
+20,000 Monte Carlo simulations of this matchup. <b>Win %</b> is how
+often the named team wins those simulations outright. <b>Cover %</b> is how
+often the model's preferred side covers the listed market number
+(spread) or lands on the listed total (O/U), pushes excluded &mdash; the
+model's own estimate, measured against the real line shown.<br><br>
+<b>LOCKED vs preview.</b> A <b>LOCKED</b> row is written to the permanent
+record and gets graded against the closing line after the game; a
+<b>preview</b> row locks at a later update nearer kickoff (within
+3 hours), once the lines and lineups are final. The
+<b>Season Results</b> tab keeps the running scorecard of every locked pick
+&mdash; that graded record, not these percentages, is the proof of what the
+model can actually do. For reference, the market's closing line has
+historically been the more accurate predictor (margin RMSE
+15.82 vs the market's ~15.1 on ~1,800 graded games), and
+52.38% is the win rate needed to profit at standard &minus;110
+pricing.
+</div>
+
+<div class="wrap"><table><tr>
+<th class="l">Game</th><th class="l">Kickoff</th><th>Status</th>
+<th>Sim Score</th><th>Win %</th>
+<th class="sep">Market Line</th><th>Spread Pick</th><th>Cover %</th>
+<th class="sep">Market O/U</th><th>O/U Pick</th><th>Cover %</th>
+</tr><tr>
+<td class="l game">Rhode Island at Merrimack<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>19.2 &ndash; 34.2<br><span class="dim">total 53.8</span></td><td>Merrimack 83%</td>
+<td class="sep">Merrimack +20.5</td><td>Merrimack +20.5</td><td><b>98.7%</b></td>
+<td class="sep">47.5</td><td>OVER 47.5</td><td><b>77.0%</b></td>
+</tr><tr>
+<td class="l game">Virginia Union at Lenoir Rhyne</td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>29.5 &ndash; 33.1<br><span class="dim">total 58.7</span></td><td>Lenoir Rhyne 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Colgate at Fordham<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>29.2 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>Fordham 59%</td>
+<td class="sep">Fordham +8.5</td><td>Fordham +8.5</td><td><b>77.5%</b></td>
+<td class="sep">55.5</td><td>OVER 55.5</td><td><b>64.4%</b></td>
+</tr><tr>
+<td class="l game">Marist at New Haven<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.6</span></td><td>New Haven 59%</td>
+<td class="sep">New Haven -2.5</td><td>New Haven -2.5</td><td><b>55.1%</b></td>
+<td class="sep">46.5</td><td>OVER 46.5</td><td><b>92.6%</b></td>
+</tr><tr>
+<td class="l game">William &amp; Mary at Villanova<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>29.3 &ndash; 32.9<br><span class="dim">total 58.5</span></td><td>Villanova 59%</td>
+<td class="sep">Villanova -12.5</td><td>William &amp; Mary +12.5</td><td><b>70.4%</b></td>
+<td class="sep">47.5</td><td>OVER 47.5</td><td><b>90.0%</b></td>
+</tr><tr>
+<td class="l game">New Hampshire at UAlbany<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill play">LOCKED</span></td>
+<td>20.0 &ndash; 36.8<br><span class="dim">total 55.6</span></td><td>UAlbany 86%</td>
+<td class="sep">UAlbany +10</td><td>UAlbany +10</td><td><b>95.0%</b></td>
+<td class="sep">46.5</td><td>OVER 46.5</td><td><b>87.0%</b></td>
+</tr><tr>
+<td class="l game">Weber State at Northern Colorado<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">3h out</span></td>
+<td>31.4 &ndash; 25.6<br><span class="dim">total 55.7</span></td><td>Weber State 64%</td>
+<td class="sep">Northern Colorado -3</td><td>Weber State +3</td><td><b>68.0%</b></td>
+<td class="sep">50.5</td><td>OVER 50.5</td><td><b>72.3%</b></td>
+</tr><tr>
+<td class="l game">Idaho at Cal Poly<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-28</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">4h out</span></td>
+<td>33.8 &ndash; 20.2<br><span class="dim">total 54.1</span></td><td>Idaho 81%</td>
+<td class="sep">Cal Poly +5.5</td><td>Idaho -5.5</td><td><b>70.9%</b></td>
+<td class="sep">53.5</td><td>OVER 53.5</td><td><b>52.6%</b></td>
+</tr><tr>
+<td class="l game">Thomas More at Wheeling</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>29.3 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>Wheeling 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Fairmont State at Dayton</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>29.4 &ndash; 33.0<br><span class="dim">total 58.6</span></td><td>Dayton 58%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Gannon at Davenport</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>29.2 &ndash; 33.2<br><span class="dim">total 58.6</span></td><td>Davenport 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Roosevelt at Chicago State</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.6</span></td><td>Chicago State 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Chowan at West Virginia State</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>29.2 &ndash; 32.9<br><span class="dim">total 58.4</span></td><td>West Virginia State 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Robert Morris at Wagner<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>24.5 &ndash; 33.6<br><span class="dim">total 56.3</span></td><td>Wagner 72%</td>
+<td class="sep">Wagner -5.5</td><td>Wagner -5.5</td><td><b>60.1%</b></td>
+<td class="sep">39.5</td><td>OVER 39.5</td><td><b>98.4%</b></td>
+</tr><tr>
+<td class="l game">North Carolina at TCU</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">18h out</span></td>
+<td>20.0 &ndash; 30.7<br><span class="dim">total 52.3</span></td><td>TCU 76%</td>
+<td class="sep">TCU -8.5</td><td>TCU -8.5</td><td><b>56.1%</b></td>
+<td class="sep">46.5</td><td>OVER 46.5</td><td><b>76.7%</b></td>
+</tr><tr>
+<td class="l game">Lock Haven at Shippensburg</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.6</span></td><td>Shippensburg 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Monroe at American International</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.3 &ndash; 32.9<br><span class="dim">total 58.5</span></td><td>American International 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Fort Lewis at William Jewell</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.1 &ndash; 33.0<br><span class="dim">total 58.4</span></td><td>William Jewell 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Delta State at Northeastern State</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.5</span></td><td>Northeastern State 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Georgetown College Kentucky at Butler</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.6</span></td><td>Butler 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Andrew at Shorter</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.3 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>Shorter 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Fort Valley State at Elizabeth City State</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.2 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>Elizabeth City State 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Post at West Virginia Wesleyan</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">19h out</span></td>
+<td>29.2 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>West Virginia Wesleyan 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Erskine at BLUEFIELD</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">20h out</span></td>
+<td>29.1 &ndash; 33.0<br><span class="dim">total 58.4</span></td><td>BLUEFIELD 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Central Connecticut at South Dakota<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">20h out</span></td>
+<td>31.7 &ndash; 29.3<br><span class="dim">total 57.8</span></td><td>Central Connecticut 56%</td>
+<td class="sep">South Dakota -23.5</td><td>Central Connecticut +23.5</td><td><b>94.6%</b></td>
+<td class="sep">51.5</td><td>OVER 51.5</td><td><b>76.8%</b></td>
+</tr><tr>
+<td class="l game">Lawrence Tech at Valparaiso</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">20h out</span></td>
+<td>29.2 &ndash; 33.0<br><span class="dim">total 58.4</span></td><td>Valparaiso 59%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Western Oregon at Colorado School of Mines</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">20h out</span></td>
+<td>29.2 &ndash; 32.9<br><span class="dim">total 58.5</span></td><td>Colorado School of Mines 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">UC Davis at Portland State<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">21h out</span></td>
+<td>24.2 &ndash; 34.0<br><span class="dim">total 56.3</span></td><td>Portland State 73%</td>
+<td class="sep">Portland State +24.5</td><td>Portland State +24.5</td><td><b>98.4%</b></td>
+<td class="sep">62.5</td><td>UNDER 62.5</td><td><b>76.8%</b></td>
+</tr><tr>
+<td class="l game">Southern at Alabama State<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">21h out</span></td>
+<td>31.0 &ndash; 31.2<br><span class="dim">total 58.5</span></td><td>Alabama State 50%</td>
+<td class="sep">Alabama State -19.5</td><td>Southern +19.5</td><td><b>88.1%</b></td>
+<td class="sep">56.5</td><td>OVER 56.5</td><td><b>57.5%</b></td>
+</tr><tr>
+<td class="l game">San José State at USC</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">21h out</span></td>
+<td>14.7 &ndash; 45.5<br><span class="dim">total 57.4</span></td><td>USC 97%</td>
+<td class="sep">USC -38.5</td><td>San José State +38.5</td><td><b>68.5%</b></td>
+<td class="sep">61.5</td><td>UNDER 61.5</td><td><b>67.7%</b></td>
+</tr><tr>
+<td class="l game">Jamestown at Upper Iowa</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">21h out</span></td>
+<td>29.2 &ndash; 33.0<br><span class="dim">total 58.5</span></td><td>Upper Iowa 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Kentucky State at Central State</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">21h out</span></td>
+<td>29.4 &ndash; 33.3<br><span class="dim">total 58.7</span></td><td>Central State 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">NC State at Virginia</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">22h out</span></td>
+<td>24.1 &ndash; 29.8<br><span class="dim">total 54.0</span></td><td>Virginia 65%</td>
+<td class="sep">Virginia -4</td><td>Virginia -4</td><td><b>52.6%</b></td>
+<td class="sep">50.5</td><td>OVER 50.5</td><td><b>64.9%</b></td>
+</tr><tr>
+<td class="l game">Lehigh at Holy Cross<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">22h out</span></td>
+<td>19.8 &ndash; 36.4<br><span class="dim">total 55.3</span></td><td>Holy Cross 86%</td>
+<td class="sep">Holy Cross +14</td><td>Holy Cross +14</td><td><b>96.9%</b></td>
+<td class="sep">47.5</td><td>OVER 47.5</td><td><b>82.1%</b></td>
+</tr><tr>
+<td class="l game">Eastern Washington at Northern Arizona<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">23h out</span></td>
+<td>29.3 &ndash; 33.1<br><span class="dim">total 58.6</span></td><td>Northern Arizona 59%</td>
+<td class="sep">Northern Arizona -4</td><td>Eastern Washington +4</td><td><b>49.5%</b></td>
+<td class="sep">55.5</td><td>OVER 55.5</td><td><b>64.5%</b></td>
+</tr><tr>
+<td class="l game">Johnson C. Smith at Benedict</td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">23h out</span></td>
+<td>29.2 &ndash; 33.1<br><span class="dim">total 58.5</span></td><td>Benedict 60%</td>
+<td class="sep"><span class="dim">no line</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+<td class="sep"><span class="dim">-</span></td><td><span class="dim">-</span></td><td><span class="dim">-</span></td>
+</tr><tr>
+<td class="l game">Jacksonville State at North Dakota State<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">24h out</span></td>
+<td>28.3 &ndash; 26.4<br><span class="dim">total 54.5</span></td><td>Jacksonville State 55%</td>
+<td class="sep">North Dakota State -6.5</td><td>Jacksonville State +6.5</td><td><b>69.9%</b></td>
+<td class="sep">46.5</td><td>OVER 46.5</td><td><b>83.7%</b></td>
+</tr><tr>
+<td class="l game">Campbell at East Tennessee State<br><span class="dim">low-data matchup</span></td><td class="l dim">2026-08-29</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">24h out</span></td>
+<td>30.8 &ndash; 29.3<br><span class="dim">total 57.4</span></td><td>Campbell 54%</td>
+<td class="sep">East Tennessee State -7</td><td>Campbell +7</td><td><b>68.6%</b></td>
+<td class="sep">55.5</td><td>OVER 55.5</td><td><b>59.2%</b></td>
+</tr></table></div>
+
+<footer>
+<b>Columns.</b> <code>Sim Score</code> is the mean simulated score, away &ndash; home;
+its <code>total</code> is shrunk toward the league mean &mdash; unshrunk totals scored
+worse than guessing the average.
+<code>Market Line</code> is quoted from the home side, negative = home favoured.
+<code>Cover %</code> is the Monte Carlo probability that the named pick beats the
+listed market number, excluding pushes.<br>
+<b>Method.</b> Ridge-regularised opponent-adjusted offence/defence ratings
+(&lambda; and recency decay chosen by walk-forward cross-validation), simulated
+20,000 times per game with a drive-based multinomial that reproduces real
+key-number clustering on margins of 3 and 7. Noise is calibrated from out-of-sample
+backtest residuals. Ratings correlate +0.99 with ESPN FPI.<br>
+<b>Not included in the line.</b> Pass-vs-pass and rush-vs-rush style matchup was tested
+and had no predictive signal (t = &minus;0.39), so it never moves these numbers.
+</footer>
