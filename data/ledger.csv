@@ -5,3 +5,5 @@ event_id,predicted_at,season,week,kickoff,home_team,away_team,neutral_site,exp_h
 401868261,2026-08-28T21:58:46,2026.0,1.0,2026-08-28,New Haven,Marist,0.0,33.06,29.32,3.75,58.57,0.5908,-2.5,46.5,DraftKings,HOME,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
 401868040,2026-08-28T21:58:46,2026.0,1.0,2026-08-28,Villanova,William & Mary,0.0,32.94,29.35,3.59,58.52,0.5895,-12.5,47.5,DraftKings,AWAY,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
 401866616,2026-08-28T21:58:46,2026.0,1.0,2026-08-28,UAlbany,New Hampshire,0.0,36.76,20.02,16.74,55.56,0.8563,10.0,46.5,DraftKings,HOME,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401868129,2026-08-29T00:31:32,2026.0,1.0,2026-08-28,Northern Colorado,Weber State,0.0,25.61,31.44,-5.83,55.71,0.356,-3.0,50.5,DraftKings,AWAY,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401868073,2026-08-29T00:31:32,2026.0,1.0,2026-08-28,Cal Poly,Idaho,0.0,20.25,33.83,-13.58,54.11,0.193,5.5,53.5,DraftKings,AWAY,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
