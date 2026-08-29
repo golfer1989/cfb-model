@@ -190,6 +190,16 @@ def season_games(season, season_type="both"):
         kick = g.get("startDate")
         if gid is None or not home or not away or not kick:
             continue
+        # CFBD's /games returns EVERY division -- including D2/D3 games the
+        # model has no ratings for. Unfiltered, those leaked into the 2026
+        # schedule and would have fired pre-kickoff builds for games like
+        # Rhode Island at Merrimack. Keep only games with an FBS side, the
+        # same universe the ESPN path fetched (FBS slate + FBS-vs-FCS
+        # crossovers, which the pooled-FCS node exists to price).
+        hc = str(g.get("homeClassification") or "").lower()
+        ac = str(g.get("awayClassification") or "").lower()
+        if "fbs" not in (hc, ac):
+            continue
         completed = bool(g.get("completed"))
         kick = _norm_kick(kick)
         out.append({

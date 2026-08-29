@@ -94,11 +94,22 @@ def refresh_schedule_window(season, days, verbose=True):
         # Website path: the whole season in one memoized CFBD call -- ESPN
         # rate-limits GitHub's servers into hours of retry cooldowns, and a
         # schedule refresh must never be the thing that makes a pre-kickoff
-        # build miss its game. The merge below is shared with the ESPN path.
+        # build miss its game. This fetch is the AUTHORITATIVE full season,
+        # so it REPLACES the stored schedule outright instead of merging:
+        # merging preserved rows the source no longer vouches for, which is
+        # how a week of unfiltered D2/D3 games would have survived their own
+        # fix. The ESPN path below still merges (it fetches partial weeks).
         rows = CF.season_games(season)
         if verbose:
             print(f"Refreshing schedule from CFBD: {len(rows)} games in one "
                   f"call (window {horizon.date()})", flush=True)
+        if rows:
+            fresh = pd.DataFrame(rows)
+            fresh["event_id"] = fresh["event_id"].astype(str)
+            fresh = fresh.drop_duplicates("event_id").sort_values(["week", "date"])
+            fresh.to_csv(sched_path, index=False)
+            return fresh
+        return base if base is not None else pd.DataFrame()
     else:
         if verbose:
             print(f"Refreshing schedule for week(s) {weeks} "
