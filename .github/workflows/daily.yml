@@ -30,8 +30,20 @@ jobs:
           now = dt.datetime.now(dt.timezone.utc)
           now_ct = now.astimezone(CT)
           manual = os.environ.get("GITHUB_EVENT_NAME") != "schedule"
-          # 8am CT run: grades yesterday, refreshes Results, previews today
-          morning = now_ct.hour == 8 and now_ct.minute < 15
+          # Morning run: grades yesterday, refreshes Results, previews today.
+          # NOT gated to a 15-minute window -- GitHub fires :00 crons 15-40
+          # minutes late routinely, which silently skipped the morning build
+          # seven days straight. Instead: the FIRST firing at/after 8am CT
+          # that finds no marker for today builds, whenever it lands, and a
+          # failed attempt retries on the next firing until one succeeds.
+          today_ct = now_ct.strftime("%Y-%m-%d")
+          done = ""
+          try:
+              with open("data/last_morning.txt") as f:
+                  done = f.read().strip()
+          except FileNotFoundError:
+              pass
+          morning = now_ct.hour >= 8 and done != today_ct
           # pre-kickoff run: some game kicks off within 35 minutes and its
           # pick is NOT yet locked in the ledger. Builds take ~2-4 min, so
           # picks land 15-35 min before kickoff with near-closing lines.
@@ -90,6 +102,10 @@ jobs:
           DATA_SOURCE: cfbd
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
         run: python daily_web.py
+
+      - name: Mark today's morning run done
+        if: steps.guard.outputs.go == 'yes' && steps.guard.outputs.why == 'morning'
+        run: TZ=America/Chicago date '+%Y-%m-%d' > data/last_morning.txt
 
       - name: Save updated data and publish the page
         if: steps.guard.outputs.go == 'yes'
