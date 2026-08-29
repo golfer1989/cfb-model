@@ -1,2 +1,5 @@
 event_id,predicted_at,season,week,kickoff,home_team,away_team,neutral_site,exp_home,exp_away,pred_margin,pred_total,home_win_prob,line_spread_home,line_total,book,spread_pick,spread_call,spread_win_prob,total_pick,total_call,total_win_prob,model_version,graded_at,final_home,final_away,act_margin,act_total,close_spread_home,close_total,su_correct,spread_result,total_result
 401856766,2026-08-29T15:42:14,2026,1,2026-08-29,TCU,North Carolina,True,30.63,20.0,10.63,52.26,0.7561,-7.5,46.5,DraftKings,HOME,NO BET,0.5,OVER,NO BET,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401864494,2026-08-29T18:34:55,2026,1,2026-08-29,USC,San José State,False,45.45,14.41,31.04,57.22,0.9721,-38.5,61.5,DraftKings,AWAY,NO BET,0.5,UNDER,NO BET,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401858202,2026-08-29T18:34:55,2026,1,2026-08-29,Virginia,NC State,False,30.14,23.7,6.45,53.99,0.6631,-4.0,51.5,DraftKings,HOME,NO BET,0.5,OVER,NO BET,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401864577,2026-08-29T18:34:55,2026,1,2026-08-29,North Dakota State,Jacksonville State,False,26.33,28.36,-2.03,54.44,0.4456,-6.5,46.5,DraftKings,AWAY,AVOID,0.5,OVER,AVOID,0.5,sig11.35_es0.000_ts0.000,,,,,,,,,,
