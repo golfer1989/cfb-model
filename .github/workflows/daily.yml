@@ -58,10 +58,15 @@ jobs:
           except FileNotFoundError:
               pass
           prewave = False
+          # only FBS-vs-FBS games get picks, so only they warrant a build
+          FBS = {"SEC", "Big Ten", "Big 12", "ACC", "American", "Sun Belt",
+                 "MAC", "CUSA", "Mountain West", "Pac-12", "FBS Indep."}
           try:
               with open("data/schedule_2026.csv") as f:
                   for r in csv.DictReader(f):
                       if r.get("status") == "STATUS_FINAL":
+                          continue
+                      if r.get("home_conf") not in FBS or r.get("away_conf") not in FBS:
                           continue
                       if str(r.get("event_id") or "").strip() in locked:
                           continue
