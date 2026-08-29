@@ -414,7 +414,7 @@ def site_nav_html(active="report"):
         cls = "sn-tab sn-on" if key == active else "sn-tab"
         return f'<a class="{cls}" href="{href}">{label}</a>'
     return f"""<style>
-.sn-nav{{display:flex;gap:8px;margin:0 0 16px}}
+.sn-nav{{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}}
 .sn-tab{{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;
 text-decoration:none;color:var(--muted);background:var(--card);
 border:1px solid var(--line)}}
@@ -422,7 +422,9 @@ border:1px solid var(--line)}}
 .sn-on{{color:var(--bg);background:var(--accent);border-color:var(--accent)}}
 </style>
 <nav class="sn-nav">{tab('index.html', "Today's Report", 'report')}
-{tab('results.html', 'Season Results', 'results')}</nav>"""
+{tab('results.html', 'Season Results', 'results')}
+{tab('schedule.html', 'Schedule', 'schedule')}
+{tab('live.html', 'Live Scores', 'live')}</nav>"""
 
 
 def _gauge_tile(label, w, l, push, pct, roi, breakeven):

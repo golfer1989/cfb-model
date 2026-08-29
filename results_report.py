@@ -166,16 +166,6 @@ def build_html(graded, summ, week=None):
 <tr><th class="l">Week</th><th>Games</th><th>Straight up</th><th>ATS</th><th>O/U</th></tr>
 {''.join(wk_rows)}</table></div>"""
 
-    n_bets = summ.get("spread_all", {}).get("n", 0)
-    caveat = ""
-    if 0 < n_bets < 700:
-        caveat = f"""<div class="note">
-<b>{n_bets} graded bets is not enough to conclude anything.</b> Detecting a
-2-point against-the-spread edge reliably needs roughly 700 bets; confirming you
-beat &minus;110 juice needs about 3,500 &mdash; several seasons. A hot or cold
-stretch here is overwhelmingly likely to be variance. Read this as bookkeeping,
-not as proof either way.</div>"""
-
     scope = f"Week {week}" if week else "Season to date"
     return f"""<title>CFB Results</title>
 <style>{CSS}</style>
@@ -186,21 +176,10 @@ not as proof either way.</div>"""
 generated {dt.datetime.now().strftime('%Y-%m-%d %H:%M')}</div>
 
 <div class="cards">{''.join(c for c in cards if c)}</div>
-{caveat}
 
 <h2>Game by game</h2>
 <div class="wrap"><table>{head}{''.join(body)}</table></div>
-{weekly}
-
-<footer>
-Every row here was <b>locked before kickoff</b> and cannot be edited afterwards.
-Spread and O/U results are graded against the <b>closing</b> line; the line you
-would actually have bet at lock time is stored separately in
-<code>data/ledger.csv</code> if you want to compare.
-Pushes are excluded from win percentages rather than counted as wins.
-ROI assumes flat stakes at &minus;110, where break-even is
-{BREAKEVEN_110:.2%} &mdash; not 50%.
-</footer>"""
+{weekly}"""
 
 
 def main():

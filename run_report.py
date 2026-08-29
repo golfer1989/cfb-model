@@ -552,43 +552,8 @@ ratings fit on {m['n_train']} games through {m['through']}</div>
 
 {LG.record_strip_html(m.get('record'))}
 
-<div class="note">
-<b>What the numbers are.</b> <b>Sim Score</b> is the average of
-{m['sims']:,} Monte Carlo simulations of this matchup. <b>Win %</b> is how
-often the named team wins those simulations outright. <b>Cover %</b> is how
-often the model's preferred side covers the listed market number
-(spread) or lands on the listed total (O/U), pushes excluded &mdash; the
-model's own estimate, measured against the real line shown.<br><br>
-<b>LOCKED vs preview.</b> A <b>LOCKED</b> row is written to the permanent
-record and gets graded against the closing line after the game; a
-<b>preview</b> row locks at a later update nearer kickoff (within
-{m['lock_hours']:g} hours), once the lines and lineups are final. The
-<b>Season Results</b> tab keeps the running scorecard of every locked pick
-&mdash; that graded record, not these percentages, is the proof of what the
-model can actually do. For reference, the market's closing line has
-historically been the more accurate predictor (margin RMSE
-{m['margin_rmse']:.2f} vs the market's ~15.1 on ~1,800 graded games), and
-{BREAKEVEN_110:.2%} is the win rate needed to profit at standard &minus;110
-pricing.
-</div>
-
 <div class="wrap"><table>{head}{''.join(body)}</table></div>
-{results_html}
-<footer>
-<b>Columns.</b> <code>Sim Score</code> is the mean simulated score, away &ndash; home;
-its <code>total</code> is shrunk toward the league mean &mdash; unshrunk totals scored
-worse than guessing the average.
-<code>Market Line</code> is quoted from the home side, negative = home favoured.
-<code>Cover %</code> is the Monte Carlo probability that the named pick beats the
-listed market number, excluding pushes.<br>
-<b>Method.</b> Ridge-regularised opponent-adjusted offence/defence ratings
-(&lambda; and recency decay chosen by walk-forward cross-validation), simulated
-{m['sims']:,} times per game with a drive-based multinomial that reproduces real
-key-number clustering on margins of 3 and 7. Noise is calibrated from out-of-sample
-backtest residuals. Ratings correlate +0.99 with ESPN FPI.<br>
-<b>Not included in the line.</b> Pass-vs-pass and rush-vs-rush style matchup was tested
-and had no predictive signal (t = &minus;0.39), so it never moves these numbers.
-</footer>"""
+{results_html}"""
 
 
 # ---------------------------------------------------------------------------
@@ -692,6 +657,14 @@ def main():
     preview_rows = []
     for i, (_, g) in enumerate(sel.iterrows(), 1):
         home, away = g["home_team"], g["away_team"]
+        # Owner's spec (2026-08-29): only games the model ACTUALLY models --
+        # both sides individually rated FBS programs. An FCS opponent is
+        # priced by the shared pooled placeholder, which is not a real
+        # prediction of that team, so those games are neither shown nor
+        # locked nor graded. The Schedule tab still lists them.
+        if (g.get("home_conf") not in R.FBS_CONFERENCES
+                or g.get("away_conf") not in R.FBS_CONFERENCES):
+            continue
         print(f"  [{i}/{len(sel)}] {away} at {home}", flush=True)
         h = R.resolve_team(ratings, home)
         a = R.resolve_team(ratings, away)
@@ -705,6 +678,16 @@ def main():
         else:
             market = PG.get_market(eid) or {}
             line = market.get("line")
+
+        # Owner's spec (2026-08-29): unpriced games are OUT -- not shown,
+        # not locked, not graded. A game with no betting line is either a
+        # mismatch the books won't touch or one the model can't meaningfully
+        # price (the first live night locked eight FCS/D2 games whose
+        # "prediction" was the home-field constant). The Schedule tab still
+        # lists every game.
+        if not line or (line.get("spread_home") is None
+                        and line.get("total") is None):
+            continue
 
         inj_h = PG.get_injuries(str(g.get("home_id")))
         inj_a = PG.get_injuries(str(g.get("away_id")))
