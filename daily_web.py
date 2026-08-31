@@ -211,3 +211,16 @@ try:
     build_live_page()
 except Exception as e:  # noqa: BLE001
     print(f"  live page failed ({type(e).__name__}: {str(e)[:80]})")
+
+# ---- research data: per-game box stats accumulate for future experiments ----
+# (pace/tempo totals A/B above all; see collect_game_stats.py). Best-effort:
+# a failure here must never cost a report.
+try:
+    import fetch_cfbd_live as _CF
+    if _CF.enabled():
+        import collect_game_stats as CGS
+        from paths import current_cfb_season as _ccs
+        note = CGS.collect(_ccs(), CGS.played_weeks_from_schedule(_ccs()))
+        print(f"=== daily_web: game-stats collection: {note}")
+except Exception as e:  # noqa: BLE001
+    print(f"  game-stats collection failed ({type(e).__name__}: {str(e)[:80]})")
