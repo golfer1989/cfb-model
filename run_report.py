@@ -787,10 +787,16 @@ def main():
             "book": (line or {}).get("book"),
             "spread_pick": (calls["spread"]["pick"] if calls.get("spread") else None),
             "spread_call": sp_conf[0],
-            "spread_win_prob": round(calls["spread"]["win_prob"], 4) if calls.get("spread") else None,
+            # record the MODEL'S displayed Cover % (not the gate-flattened
+            # market number, which wrote a useless 0.5 on every week-0 row):
+            # season-long calibration -- "when it said 81%, how often did it
+            # cover?" -- is only measurable if the claim itself is stored
+            "spread_win_prob": round(calls["spread"].get("model_win_prob",
+                                     calls["spread"]["win_prob"]), 4) if calls.get("spread") else None,
             "total_pick": (calls["total"]["pick"] if calls.get("total") else None),
             "total_call": to_conf[0],
-            "total_win_prob": round(calls["total"]["win_prob"], 4) if calls.get("total") else None,
+            "total_win_prob": round(calls["total"].get("model_win_prob",
+                                    calls["total"]["win_prob"]), 4) if calls.get("total") else None,
             "model_version": LG.model_version(calib),
         })
 
