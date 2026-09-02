@@ -15,28 +15,28 @@
     "n_games": 1853,
     "margin_rmse": 15.832965091226475,
     "margin_mae": 12.616860033772047,
-    "margin_bias": -0.5748600364850021,
+    "margin_bias": -0.5748600364850054,
     "total_rmse": 16.273435697703107,
     "total_mae": 12.96780232653072,
-    "total_bias": 0.29339431192507665,
+    "total_bias": 0.29339431192507703,
     "su_accuracy": 0.7420399352401511,
     "score_resid_std": 11.351447184885767,
-    "resid_corr": 0.02815279783912406,
+    "resid_corr": 0.028152797839124048,
     "margin_resid_std": 15.822525699724702,
     "total_resid_std": 16.270790674856826
   },
   "total_calibration": {
-    "slope": 0.5375363194988432,
-    "intercept": 25.04349632664685,
-    "r2": 0.06545502603905567,
+    "slope": 0.5375363194988428,
+    "intercept": 25.04349632664687,
+    "r2": 0.06545502603905573,
     "n_fit": 919,
     "fit_seasons": [
       2024
     ]
   },
   "calibration": {
-    "brier": 0.16451335531348138,
-    "log_loss": 0.48739408095794956
+    "brier": 0.16451335531348135,
+    "log_loss": 0.48739408095794967
   },
   "coach_adjustment": {
     "applied": false,
@@ -50,14 +50,14 @@
   "NOTE": "score_resid_std here is OUT-OF-SAMPLE and is the value the simulator should use. The in-sample figure from fit_ratings is biased low because ratings were fitted to those games.",
   "edge_shrinkage": {
     "n": 1799,
-    "alpha": 0.9327321797918534,
+    "alpha": 0.9327321797918542,
     "alpha_se": 0.356529613639644,
-    "beta": 0.1486819537942393,
-    "beta_se": 0.06630821583474289,
-    "beta_t": 2.242285543691794,
-    "beta_t_hc1": 2.42358874901576,
-    "beta_t_clustered": 2.5975450902832473,
-    "beta_t_weakest": 2.242285543691794,
+    "beta": 0.1486819537942389,
+    "beta_se": 0.0663082158347429,
+    "beta_t": 2.242285543691788,
+    "beta_t_hc1": 2.4235887490157544,
+    "beta_t_clustered": 2.597545090283241,
+    "beta_t_weakest": 2.242285543691788,
     "resid_sd": 15.076131737847078,
     "significant": true,
     "interpretation": "model edge carries real signal; shrink edges by beta",
@@ -72,14 +72,14 @@
         {
           "season": 2024,
           "n": 875,
-          "beta": 0.09602757452908063,
-          "t": 1.0745070960966012
+          "beta": 0.09602757452908058,
+          "t": 1.0745070960966008
         },
         {
           "season": 2025,
           "n": 924,
-          "beta": 0.21578079912875092,
-          "t": 2.1753692624539074
+          "beta": 0.21578079912875062,
+          "t": 2.1753692624539043
         }
       ],
       "passed": false,
@@ -90,8 +90,8 @@
       ],
       "pooled": {
         "n": 1799,
-        "beta": 0.1486819537942393,
-        "t": 2.242285543691794
+        "beta": 0.1486819537942389,
+        "t": 2.242285543691788
       },
       "fit_seasons": [
         2024
@@ -99,13 +99,13 @@
       "test_season": 2025,
       "fit": {
         "n": 875,
-        "beta": 0.09602757452908063,
-        "t": 1.0745070960966012
+        "beta": 0.09602757452908058,
+        "t": 1.0745070960966008
       },
       "test": {
         "n": 924,
-        "beta": 0.21578079912875092,
-        "t": 2.1753692624539074
+        "beta": 0.21578079912875062,
+        "t": 2.1753692624539043
       },
       "sign_consistent": true,
       "checks": {
@@ -121,14 +121,14 @@
         {
           "season": 2024,
           "n": 877,
-          "beta": 0.14785018903884403,
-          "t": 0.6537920132522721
+          "beta": 0.14785018903884464,
+          "t": 0.6537920132522745
         },
         {
           "season": 2025,
           "n": 931,
-          "beta": 0.00824994972358427,
-          "t": 0.037749989411315486
+          "beta": 0.008249949723583403,
+          "t": 0.03774998941131149
         }
       ],
       "passed": false,
@@ -139,8 +139,8 @@
       ],
       "pooled": {
         "n": 1808,
-        "beta": 0.09076052476847825,
-        "t": 0.5778503319453109
+        "beta": 0.0907605247684781,
+        "t": 0.5778503319453094
       },
       "fit_seasons": [
         2024
@@ -148,13 +148,13 @@
       "test_season": 2025,
       "fit": {
         "n": 877,
-        "beta": 0.14785018903884403,
-        "t": 0.6537920132522721
+        "beta": 0.14785018903884464,
+        "t": 0.6537920132522745
       },
       "test": {
         "n": 931,
-        "beta": 0.00824994972358427,
-        "t": 0.037749989411315486
+        "beta": 0.008249949723583403,
+        "t": 0.03774998941131149
       },
       "sign_consistent": true,
       "checks": {
@@ -167,10 +167,10 @@
   },
   "total_edge_shrinkage": {
     "n": 1808,
-    "alpha": -1.1697391639638224e-15,
-    "beta": 0.09076052476847825,
-    "beta_se": 0.1570658001751707,
-    "beta_t": 0.5778503319453109,
+    "alpha": -8.35527974259873e-16,
+    "beta": 0.0907605247684781,
+    "beta_se": 0.15706580017517083,
+    "beta_t": 0.5778503319453094,
     "resid_sd": 15.709535631444265,
     "significant": false,
     "note": "beta measures the model's contribution AFTER removing the market-fade component the calibrated total is dominated by",
@@ -181,7 +181,7 @@
   "clv_diagnostic": {
     "n": 1466,
     "direction_agree": 0.5545702592087313,
-    "corr": 0.11993811102687872,
+    "corr": 0.11993811102687876,
     "clv_points": 0.339699863574352,
     "clv_t": 5.006459256114739,
     "clv_by_season": [
@@ -189,7 +189,7 @@
         "season": 2024,
         "n": 749,
         "clv_points": 0.14218958611481977,
-        "clv_t": 1.4938793093073175
+        "clv_t": 1.4938793093073177
       },
       {
         "season": 2025,
@@ -200,9 +200,9 @@
     ],
     "total_clv": {
       "n": 1808,
-      "beta": 0.13614153911045263,
+      "beta": 0.13614153911045251,
       "se": 0.01202464814492081,
-      "t": 11.321872995340705
+      "t": 11.321872995340696
     },
     "NOTE": "monitoring statistic only -- CLV is an UPPER BOUND on edge, not a substitute for it (measured +0.27 pts against the 0.90 pts needed to break even at -110). Deliberately NOT consumed by run_report.py. If the 2025 spread CLV repeats on fresh 2026 data it becomes a two-season result worth revisiting; on one season it is a coin that landed heads."
   }
