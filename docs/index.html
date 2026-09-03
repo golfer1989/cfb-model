@@ -1,9 +1,123 @@
-<!doctype html><meta charset="utf-8">
 <title>CFB Model Report</title>
-<style>body{font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;
-max-width:640px;margin:15vh auto;padding:0 24px;color:#16191d}
-h1{font-size:22px} .dim{color:#5b636d}</style>
-<h1>No college football games today</h1>
-<p class="dim">Checked Wednesday, September 02, 2026. The model found no games kicking off in the
-next 1 day(s). This page rebuilds automatically every morning at
-8:00 AM Central; the next slate will appear here the morning it plays.</p>
+<style>
+:root{--bg:#ffffff;--fg:#16191d;--muted:#5b636d;--line:#e3e6ea;--card:#f7f8fa;
+--pos:#0a7d3f;--neg:#b3261e;--warn:#8a6100;--accent:#1a4f8a;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#0f1216;--fg:#e8eaed;--muted:#9aa3ad;--line:#272c33;--card:#161a20;
+--pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--accent:#7fb2ee;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.note{background:var(--card);border-left:3px solid var(--warn);padding:12px 14px;
+border-radius:4px;margin-bottom:20px;font-size:13px;color:var(--fg)}
+.note b{color:var(--warn)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-variant-numeric:tabular-nums}
+th{background:var(--card);text-align:right;padding:9px 10px;font-size:11px;
+text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+th.l,td.l{text-align:left}
+td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--card)}
+.game{font-weight:600}
+.dim{color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.play{background:rgba(10,125,63,.14);color:var(--pos)}
+.lean{background:rgba(138,97,0,.16);color:var(--warn)}
+.nobet{background:rgba(120,120,120,.16);color:var(--muted)}
+.avoid{background:rgba(179,38,30,.14);color:var(--neg)}
+.sep{border-left:2px solid var(--line)}
+footer{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.7}
+h2{font-size:16px;margin:30px 0 4px}
+.rec{background:var(--card);border:1px solid var(--line);border-radius:6px;
+padding:12px 14px;margin:10px 0 16px;font-size:13px;line-height:1.8;
+white-space:pre-wrap;font-variant-numeric:tabular-nums}
+.win{color:var(--pos);font-weight:600}
+.loss{color:var(--neg);font-weight:600}
+.pushr{color:var(--muted);font-weight:600}
+code{background:var(--card);padding:1px 5px;border-radius:3px}
+</style>
+<style>
+.sn-nav{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}
+.sn-tab{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;
+text-decoration:none;color:var(--muted);background:var(--card);
+border:1px solid var(--line)}
+.sn-tab:hover{color:var(--fg)}
+.sn-on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+</style>
+<nav class="sn-nav"><a class="sn-tab sn-on" href="index.html">Today's Report</a>
+<a class="sn-tab" href="results.html">Season Results</a>
+<a class="sn-tab" href="schedule.html">Schedule</a>
+<a class="sn-tab" href="live.html">Live Scores</a></nav>
+<h1>College Football Model Report</h1>
+<div class="sub">Generated 2026-09-03 13:09 &middot;
+4 games &middot; 4 with a market line &middot;
+ratings fit on 2828 games through 2026</div>
+
+<style>
+.rs-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+gap:12px;margin:0 0 18px}
+.rs-tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
+padding:12px 14px}
+.rs-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--muted);margin-bottom:2px}
+.rs-v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.rs-n{font-size:12px;color:var(--muted);margin:2px 0 10px;
+font-variant-numeric:tabular-nums}
+.rs-track{position:relative;height:8px;border-radius:4px;background:var(--line)}
+.rs-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
+background:var(--accent)}
+.rs-tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);
+opacity:.65}
+.rs-be{font-size:10.5px;color:var(--muted);margin-top:5px}
+.rs-up{color:var(--pos);font-size:14px}
+.rs-down{color:var(--neg);font-size:14px}
+.rs-dim{color:var(--muted)}
+</style><div class="rs-strip"><div class="rs-tile"><div class="rs-k">Spread picks</div>
+<div class="rs-v">62.5% <span class="rs-up">&#9650;</span></div>
+<div class="rs-n">5&ndash;3 &middot; ROI +19.3% at &minus;110</div>
+<div class="rs-track"><span class="rs-fill" style="width:62.50%"></span>
+<span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Over / Under picks</div>
+<div class="rs-v">25.0% <span class="rs-down">&#9660;</span></div>
+<div class="rs-n">2&ndash;6 &middot; ROI -52.3% at &minus;110</div>
+<div class="rs-track"><span class="rs-fill" style="width:25.00%"></span>
+<span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Straight-up winner</div>
+<div class="rs-v">62.5% <span class="rs-up">&#9650;</span></div>
+<div class="rs-n">5&ndash;3</div>
+<div class="rs-track"><span class="rs-fill" style="width:62.50%"></span>
+<span class="rs-tick" style="left:50.00%"></span></div></div></div><div class="rs-be" style="margin:-12px 0 16px">Every locked pick counts &mdash; graded against the closing line over 8 finished games. The tick is the &minus;110 break-even; above it a record makes money, below it it loses.</div>
+
+<div class="wrap"><table><tr>
+<th class="l">Game</th><th class="l">Kickoff</th><th>Status</th>
+<th>Sim Score</th><th>Win %</th>
+<th class="sep">Market Line</th><th>Spread Pick</th><th>Cover %</th>
+<th class="sep">Market O/U</th><th>O/U Pick</th><th>Cover %</th>
+</tr><tr>
+<td class="l game">Massachusetts at Rutgers</td><td class="l dim">2026-09-03</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">9h out</span></td>
+<td>12.0 &ndash; 46.4<br><span class="dim">total 56.4</span></td><td>Rutgers 98%</td>
+<td class="sep">Rutgers -28.5</td><td>Rutgers -28.5</td><td><b>65.4%</b></td>
+<td class="sep">51.5</td><td>OVER 51.5</td><td><b>71.8%</b></td>
+</tr><tr>
+<td class="l game">Akron at Wake Forest</td><td class="l dim">2026-09-03</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">10h out</span></td>
+<td>14.1 &ndash; 35.8<br><span class="dim">total 51.9</span></td><td>Wake Forest 92%</td>
+<td class="sep">Wake Forest -24.5</td><td>Akron +24.5</td><td><b>57.2%</b></td>
+<td class="sep">48.5</td><td>OVER 48.5</td><td><b>65.9%</b></td>
+</tr><tr>
+<td class="l game">Colorado at Georgia Tech</td><td class="l dim">2026-09-03</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">11h out</span></td>
+<td>21.5 &ndash; 33.9<br><span class="dim">total 54.8</span></td><td>Georgia Tech 79%</td>
+<td class="sep">Georgia Tech -6.5</td><td>Georgia Tech -6.5</td><td><b>65.2%</b></td>
+<td class="sep">50.5</td><td>OVER 50.5</td><td><b>68.8%</b></td>
+</tr><tr>
+<td class="l game">UAB at Illinois</td><td class="l dim">2026-09-03</td>
+<td><span class="pill nobet">preview</span><br><span class="dim">12h out</span></td>
+<td>15.8 &ndash; 43.4<br><span class="dim">total 56.9</span></td><td>Illinois 96%</td>
+<td class="sep">Illinois -27.5</td><td>Illinois -27.5</td><td><b>51.0%</b></td>
+<td class="sep">54.5</td><td>OVER 54.5</td><td><b>60.6%</b></td>
+</tr></table></div>
+<div class="rec"><b>Record so far:</b> straight up 5-3 (62%) &middot; ATS 5-3 (62%) &middot; O/U 2-6 (25%) &nbsp;<span class="dim">over 8 completed games &mdash; open CFB_Results.exe for the full scorecard</span></div>
