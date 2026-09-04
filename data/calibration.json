@@ -15,27 +15,27 @@
     "n_games": 1853,
     "margin_rmse": 15.832965091226475,
     "margin_mae": 12.616860033772047,
-    "margin_bias": -0.5748600364850056,
+    "margin_bias": -0.5748600364850031,
     "total_rmse": 16.273435697703107,
     "total_mae": 12.96780232653072,
-    "total_bias": 0.2933943119250765,
+    "total_bias": 0.2933943119250766,
     "su_accuracy": 0.7420399352401511,
     "score_resid_std": 11.351447184885767,
-    "resid_corr": 0.02815279783912408,
+    "resid_corr": 0.02815279783912406,
     "margin_resid_std": 15.822525699724702,
     "total_resid_std": 16.270790674856826
   },
   "total_calibration": {
-    "slope": 0.537536319498843,
-    "intercept": 25.043496326646874,
-    "r2": 0.0654550260390557,
+    "slope": 0.5375363194988434,
+    "intercept": 25.04349632664687,
+    "r2": 0.06545502603905573,
     "n_fit": 919,
     "fit_seasons": [
       2024
     ]
   },
   "calibration": {
-    "brier": 0.16451335531348135,
+    "brier": 0.16451335531348138,
     "log_loss": 0.48739408095794967
   },
   "coach_adjustment": {
@@ -50,14 +50,14 @@
   "NOTE": "score_resid_std here is OUT-OF-SAMPLE and is the value the simulator should use. The in-sample figure from fit_ratings is biased low because ratings were fitted to those games.",
   "edge_shrinkage": {
     "n": 1799,
-    "alpha": 0.9327321797918547,
+    "alpha": 0.932732179791854,
     "alpha_se": 0.356529613639644,
-    "beta": 0.14868195379423899,
+    "beta": 0.14868195379423904,
     "beta_se": 0.06630821583474289,
-    "beta_t": 2.2422855436917897,
-    "beta_t_hc1": 2.4235887490157557,
-    "beta_t_clustered": 2.5975450902832424,
-    "beta_t_weakest": 2.2422855436917897,
+    "beta_t": 2.24228554369179,
+    "beta_t_hc1": 2.423588749015756,
+    "beta_t_clustered": 2.597545090283243,
+    "beta_t_weakest": 2.24228554369179,
     "resid_sd": 15.076131737847078,
     "significant": true,
     "interpretation": "model edge carries real signal; shrink edges by beta",
@@ -72,14 +72,14 @@
         {
           "season": 2024,
           "n": 875,
-          "beta": 0.09602757452908033,
-          "t": 1.0745070960965981
+          "beta": 0.09602757452908062,
+          "t": 1.0745070960966012
         },
         {
           "season": 2025,
           "n": 924,
-          "beta": 0.21578079912875128,
-          "t": 2.175369262453911
+          "beta": 0.21578079912875078,
+          "t": 2.1753692624539065
         }
       ],
       "passed": false,
@@ -90,8 +90,8 @@
       ],
       "pooled": {
         "n": 1799,
-        "beta": 0.14868195379423899,
-        "t": 2.2422855436917897
+        "beta": 0.14868195379423904,
+        "t": 2.24228554369179
       },
       "fit_seasons": [
         2024
@@ -99,13 +99,13 @@
       "test_season": 2025,
       "fit": {
         "n": 875,
-        "beta": 0.09602757452908033,
-        "t": 1.0745070960965981
+        "beta": 0.09602757452908062,
+        "t": 1.0745070960966012
       },
       "test": {
         "n": 924,
-        "beta": 0.21578079912875128,
-        "t": 2.175369262453911
+        "beta": 0.21578079912875078,
+        "t": 2.1753692624539065
       },
       "sign_consistent": true,
       "checks": {
@@ -121,14 +121,14 @@
         {
           "season": 2024,
           "n": 877,
-          "beta": 0.14785018903884511,
-          "t": 0.6537920132522766
+          "beta": 0.14785018903884406,
+          "t": 0.6537920132522725
         },
         {
           "season": 2025,
           "n": 931,
-          "beta": 0.008249949723584133,
-          "t": 0.03774998941131485
+          "beta": 0.008249949723584652,
+          "t": 0.03774998941131724
         }
       ],
       "passed": false,
@@ -139,8 +139,8 @@
       ],
       "pooled": {
         "n": 1808,
-        "beta": 0.09076052476847841,
-        "t": 0.5778503319453118
+        "beta": 0.09076052476847846,
+        "t": 0.5778503319453123
       },
       "fit_seasons": [
         2024
@@ -148,13 +148,13 @@
       "test_season": 2025,
       "fit": {
         "n": 877,
-        "beta": 0.14785018903884511,
-        "t": 0.6537920132522766
+        "beta": 0.14785018903884406,
+        "t": 0.6537920132522725
       },
       "test": {
         "n": 931,
-        "beta": 0.008249949723584133,
-        "t": 0.03774998941131485
+        "beta": 0.008249949723584652,
+        "t": 0.03774998941131724
       },
       "sign_consistent": true,
       "checks": {
@@ -167,11 +167,11 @@
   },
   "total_edge_shrinkage": {
     "n": 1808,
-    "alpha": -1.0444099678248412e-15,
-    "beta": 0.09076052476847841,
-    "beta_se": 0.15706580017517074,
-    "beta_t": 0.5778503319453118,
-    "resid_sd": 15.709535631444265,
+    "alpha": -3.759875884169429e-16,
+    "beta": 0.09076052476847846,
+    "beta_se": 0.15706580017517066,
+    "beta_t": 0.5778503319453123,
+    "resid_sd": 15.709535631444266,
     "significant": false,
     "note": "beta measures the model's contribution AFTER removing the market-fade component the calibrated total is dominated by",
     "shrink_factor": 0.0,
@@ -181,7 +181,7 @@
   "clv_diagnostic": {
     "n": 1466,
     "direction_agree": 0.5545702592087313,
-    "corr": 0.11993811102687868,
+    "corr": 0.11993811102687867,
     "clv_points": 0.339699863574352,
     "clv_t": 5.006459256114739,
     "clv_by_season": [
@@ -200,9 +200,9 @@
     ],
     "total_clv": {
       "n": 1808,
-      "beta": 0.1361415391104526,
-      "se": 0.012024648144920814,
-      "t": 11.3218729953407
+      "beta": 0.1361415391104525,
+      "se": 0.012024648144920812,
+      "t": 11.321872995340692
     },
     "NOTE": "monitoring statistic only -- CLV is an UPPER BOUND on edge, not a substitute for it (measured +0.27 pts against the 0.90 pts needed to break even at -110). Deliberately NOT consumed by run_report.py. If the 2025 spread CLV repeats on fresh 2026 data it becomes a two-season result worth revisiting; on one season it is a coin that landed heads."
   }
