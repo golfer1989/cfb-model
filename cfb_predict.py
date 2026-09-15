@@ -257,6 +257,61 @@ def coach_margin_adj(new_coach_set, home, away):
 
 
 # ---------------------------------------------------------------------------
+# Roster-churn adjustment (preregistered 2026; ships only via the flag in
+# calibration.json["churn_adjustment"], same gate pattern as fcs_augmentation)
+# ---------------------------------------------------------------------------
+# Measured in experiments/personnel_lab.py: teams with heavy transfer-portal
+# volume (in + out) BEAT the ratings' early-season expectations -- the
+# ratings wear last season's glasses and a rebuilt roster is a new team.
+# Effect fitted on 2024-25 out-of-sample residuals (weeks 1-4), preregistered
+# for 2026 confirmation before enabling. Applied to MARGIN only (totals-
+# neutral, same ±half mechanism as the coach adjustment), full weight weeks
+# 1-4, half weight week 5, zero after -- exactly the tested scope, nothing
+# beyond it.
+
+def load_churn_z(season, data_dir=None):
+    """Per-team z-score of transfer-portal volume (players in + players out)
+    for the given season. Empty dict when the portal file is absent."""
+    import pandas as pd
+    dd = data_dir or DATA_DIR
+    path = os.path.join(dd, f"cfbd_portal_{season}.csv")
+    if not os.path.exists(path):
+        return {}
+    try:
+        po = pd.read_csv(path)
+        vol = (po.groupby("destination").size()
+               .add(po.groupby("origin").size(), fill_value=0))
+    except (OSError, ValueError, KeyError):
+        return {}
+    if not len(vol) or vol.std() == 0:
+        return {}
+    z = (vol - vol.mean()) / vol.std()
+    try:                      # CFBD school names -> the model's team names
+        from fetch_cfbd_live import canon_name
+        return {canon_name(t): float(v) for t, v in z.items()}
+    except ImportError:
+        return {t: float(v) for t, v in z.items()}
+
+
+def churn_margin_adj(zmap, home, away, week, cfg):
+    """Home-margin adjustment k * (z_home - z_away), windowed to the weeks
+    the effect was measured on. Returns 0 unless cfg says enabled."""
+    if not cfg or not cfg.get("enabled") or not zmap:
+        return 0.0
+    try:
+        wk = int(week)
+    except (TypeError, ValueError):
+        return 0.0
+    window = 1.0 if wk <= 4 else (0.5 if wk == 5 else 0.0)
+    if window == 0.0:
+        return 0.0
+    k = float(cfg.get("k", 0.0))
+    dz = zmap.get(home, 0.0) - zmap.get(away, 0.0)
+    # cap: no single matchup moves more than 3 points on churn alone
+    return float(np.clip(k * dz * window, -3.0, 3.0))
+
+
+# ---------------------------------------------------------------------------
 # Drive-based Monte Carlo
 # ---------------------------------------------------------------------------
 

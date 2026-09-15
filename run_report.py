@@ -464,6 +464,30 @@ def build_results_section(graded, summary_text):
 """
 
 
+def _display_beta(led, claim_col, res_col):
+    """How much of a stated Cover % the season's own record supports.
+
+    Fits outcome-vs-claim through the (50%, 50%) anchor on every graded pick
+    that carried a real claim, clamped to [0, 1]: 1 shows claims raw, 0 shows
+    50.0% because the record says the claims are worth a coin flip. Refits
+    on every build, so the displayed numbers EARN their distance from 50 as
+    the season record justifies it -- in either direction.
+    """
+    try:
+        d = led[(led[claim_col].notna()) & (led[claim_col] != 0.5)
+                & (led[res_col].isin(["WIN", "LOSS"]))]
+        if len(d) < 30:
+            return 1.0
+        c = d[claim_col].astype(float) - 0.5
+        o = (d[res_col] == "WIN").astype(float) - 0.5
+        denom = float((c * c).sum())
+        if denom <= 0:
+            return 1.0
+        return float(min(max(float((c * o).sum()) / denom, 0.0), 1.0))
+    except Exception:  # noqa: BLE001 -- display must never sink a build
+        return 1.0
+
+
 def build_html(rows, meta, results_html=""):
     # Layout per the owner's spec (2026-08-21): the page shows the market
     # line, the simulated score, the straight-up Win %, and the model's own
@@ -522,13 +546,24 @@ def build_html(rows, meta, results_html=""):
             side = r["home"] if sp["pick"] == "HOME" else r["away"]
             spread_bet = (f'{html.escape(side)} '
                           f'{sp["market_line"] if sp["pick"]=="HOME" else -sp["market_line"]:+g}')
-            sp_cov = f'<b>{sp.get("model_win_prob", sp["win_prob"])*100:.1f}%</b>'
+            # DISPLAY RECALIBRATION (owner's spec 2026-09-15: "display the
+            # real results"): the shown % is the raw simulator conviction
+            # passed through a coefficient fitted weekly on this season's own
+            # graded record -- what a claim of this size has actually been
+            # worth. Raw claims are still stored in the ledger so the fit
+            # keeps learning. beta is clamped to [0,1]: 1 = record supports
+            # the claims fully, 0 = record says they are worth a coin flip.
+            raw_cov = sp.get("model_win_prob", sp["win_prob"])
+            disp = 0.5 + meta.get("beta_spread", 1.0) * (raw_cov - 0.5)
+            sp_cov = f'<b>{disp*100:.1f}%</b>'
         else:
             spread_bet = sp_cov = '<span class="dim">-</span>'
 
         if to:
             ou_bet = f'{to["pick"]} {to["market_total"]:g}'
-            ou_cov = f'<b>{to.get("model_win_prob", to["win_prob"])*100:.1f}%</b>'
+            raw_ou = to.get("model_win_prob", to["win_prob"])
+            disp_ou = 0.5 + meta.get("beta_total", 1.0) * (raw_ou - 0.5)
+            ou_cov = f'<b>{disp_ou*100:.1f}%</b>'
             mkt_tot = f'{to["market_total"]:g}'
         else:
             ou_bet = ou_cov = mkt_tot = '<span class="dim">-</span>'
@@ -610,6 +645,15 @@ def main():
 
     # first-year head coach margin adjustment (same one the backtest applies)
     coach_new = P.load_coach_changes([args.season]).get(args.season, set())
+
+    # roster-churn adjustment: OFF until the preregistered 2026 test passes
+    # and writes enabled=true into calibration.json (see cfb_predict).
+    churn_cfg = calib.get("churn_adjustment") or {}
+    churn_z = P.load_churn_z(args.season) if churn_cfg.get("enabled") else {}
+    if churn_cfg.get("enabled") and churn_z:
+        print(f"Churn adjustment active: {churn_cfg.get('k', 0):+.2f} pts per sd "
+              f"of portal volume (weeks 1-4, half week 5; validated "
+              f"{churn_cfg.get('validated_on', '?')})")
     if coach_new:
         print(f"Coach adjustment active: {len(coach_new)} first-year-coach teams "
               f"({P.COACH_CHANGE_MARGIN:+.1f} margin each, market-priced -- "
@@ -704,7 +748,9 @@ def main():
         eh, ea = P.expected_scores(ratings, h, a,
                                    neutral=bool(g.get("neutral_site", False)),
                                    qb_adj=qb_adj,
-                                   margin_adj=P.coach_margin_adj(coach_new, home, away))
+                                   margin_adj=(P.coach_margin_adj(coach_new, home, away)
+                                               + P.churn_margin_adj(churn_z, home, away,
+                                                                    g.get("week"), churn_cfg)))
         sim_h, sim_a = P.simulate(eh, ea, n_sims=args.sims,
                                   sigma=calib["score_resid_std"], seed=eid)
         pred = P.summarize(home, away, sim_h, sim_a, calib=calib)
@@ -847,6 +893,8 @@ def main():
         "shrink_n": shrink_info.get("n"),
         "lock_hours": args.lock_hours,
         "record": LG.summarize(),
+        "beta_spread": _display_beta(LG._load(), "spread_win_prob", "spread_result"),
+        "beta_total": _display_beta(LG._load(), "total_win_prob", "total_result"),
     }
     # completed games + running record, so the report becomes a season-long
     # scorecard rather than a snapshot

@@ -295,6 +295,18 @@ def main():
             prior_fcs_flag = {}
     fcs_info = dict(prior_fcs_flag) if prior_fcs_flag else {"enabled": False}
 
+    # Churn adjustment: same carry-through pattern -- the flag is decided by
+    # the preregistered 2026 test (experiments/personnel_lab.py), written
+    # into calibration.json once, and preserved across recalibrations here.
+    prior_churn_flag = {}
+    if os.path.exists(cpath):
+        try:
+            with open(cpath, encoding="utf-8") as f:
+                prior_churn_flag = (json.load(f).get("churn_adjustment") or {})
+        except (json.JSONDecodeError, OSError):
+            prior_churn_flag = {}
+    churn_info = dict(prior_churn_flag) if prior_churn_flag else {"enabled": False}
+
     print(f"Walk-forward backtest over {args.seasons} "
           f"(lambda={args.lam}, decay={args.decay}, "
           f"conf_shrink={not args.no_conf_shrink})\n")
@@ -431,6 +443,7 @@ def main():
                      "market prices it, so it improves projections not bets"),
         },
         "fcs_augmentation": fcs_info,
+        "churn_adjustment": churn_info,
         "NOTE": ("score_resid_std here is OUT-OF-SAMPLE and is the value the "
                  "simulator should use. The in-sample figure from fit_ratings "
                  "is biased low because ratings were fitted to those games."),
