@@ -55,6 +55,56 @@ def _fetch_week(season, week, season_type="regular"):
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Season-level tables the experiments need
+# ---------------------------------------------------------------------------
+# Added 2026-09-27 after the preregistered churn verdict was blocked TWICE:
+# cfbd_portal_<year>.csv existed only in the owner's Google Drive folder, so
+# analysis could not run whenever his machine was offline. Fetching it here
+# puts it in the repo, where every future run (and every future season) finds
+# it automatically. One call per season, skipped once the file exists.
+
+SEASON_TABLES = {
+    "portal": "/player/portal",
+    "returning": "/player/returning",
+    "talent": "/talent",
+}
+
+
+def _has_rows(path):
+    """True when the CSV exists and holds at least one data row."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            f.readline()                      # header
+            return bool(f.readline().strip())
+    except OSError:
+        return False
+
+
+def collect_season_tables(season):
+    import csv as _csv
+    notes = []
+    for name, path in SEASON_TABLES.items():
+        out = os.path.join(DATA_DIR, f"cfbd_{name}_{season}.csv")
+        if _has_rows(out):          # header-only/empty files are refetched
+            continue
+        try:
+            rows = _get(path, {"year": int(season)}) or []
+        except RuntimeError as e:
+            notes.append(f"{name} FAILED ({str(e)[:40]})")
+            continue
+        if not rows:
+            continue
+        keys = sorted({k for r in rows for k in r.keys()})
+        with open(out, "w", encoding="utf-8", newline="") as f:
+            w = _csv.DictWriter(f, fieldnames=keys)
+            w.writeheader()
+            for r in rows:
+                w.writerow({k: r.get(k) for k in keys})
+        notes.append(f"{name} {season}: {len(rows)} rows")
+    return "; ".join(notes)
+
+
 def collect(current_season, played_weeks=None, budget=40):
     """Fill every missing week, oldest first, within a per-run call budget.
 
@@ -63,6 +113,7 @@ def collect(current_season, played_weeks=None, budget=40):
     """
     if get_key() is None:
         return "no CFBD key; skipped"
+    season_note = collect_season_tables(current_season)
     todo = []
     for season, weeks in BACKFILL:
         for w in weeks:
@@ -80,9 +131,10 @@ def collect(current_season, played_weeks=None, budget=40):
             games += n
         except RuntimeError as e:
             return f"stopped after {fetched} week(s): {e}"
+    prefix = (season_note + "; ") if season_note else ""
     if not todo:
-        return "up to date"
-    return (f"fetched {fetched} week(s), {games} game payloads"
+        return prefix + "weeks up to date"
+    return (prefix + f"fetched {fetched} week(s), {games} game payloads"
             + (f"; {len(todo) - fetched} week(s) remaining" if len(todo) > fetched else ""))
 
 
