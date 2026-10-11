@@ -1,45 +1,25 @@
 <title>CFB Model Report</title>
-<style>
-:root{--bg:#ffffff;--fg:#16191d;--muted:#5b636d;--line:#e3e6ea;--card:#f7f8fa;
---pos:#0a7d3f;--neg:#b3261e;--warn:#8a6100;--accent:#1a4f8a;}
+<style>:root{--bg:#ffffff;--fg:#16191d;--muted:#5b636d;--line:#e3e6ea;
+--card:#f7f8fa;--pos:#0a7d3f;--neg:#b3261e;--warn:#8a6100;--accent:#1a4f8a;}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
 --bg:#0f1216;--fg:#e8eaed;--muted:#9aa3ad;--line:#272c33;--card:#161a20;
 --pos:#4ade80;--neg:#f87171;--warn:#fbbf24;--accent:#7fb2ee;}}
-*{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);
-font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px}
-h1{font-size:22px;margin:0 0 4px}
-.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
-.note{background:var(--card);border-left:3px solid var(--warn);padding:12px 14px;
-border-radius:4px;margin-bottom:20px;font-size:13px;color:var(--fg)}
-.note b{color:var(--warn)}
-.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
-table{border-collapse:collapse;width:100%;min-width:1180px;font-variant-numeric:tabular-nums}
-th{background:var(--card);text-align:right;padding:9px 10px;font-size:11px;
-text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
-border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
-th.l,td.l{text-align:left}
-td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+font:14px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;padding:22px 26px 60px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 18px}
+h2{font-size:15px;margin:24px 0 6px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--card)}
-.game{font-weight:600}
 .dim{color:var(--muted);font-size:12px}
-.pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
-.play{background:rgba(10,125,63,.14);color:var(--pos)}
-.lean{background:rgba(138,97,0,.16);color:var(--warn)}
-.nobet{background:rgba(120,120,120,.16);color:var(--muted)}
-.avoid{background:rgba(179,38,30,.14);color:var(--neg)}
-.sep{border-left:2px solid var(--line)}
-footer{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.7}
-h2{font-size:16px;margin:30px 0 4px}
-.rec{background:var(--card);border:1px solid var(--line);border-radius:6px;
-padding:12px 14px;margin:10px 0 16px;font-size:13px;line-height:1.8;
-white-space:pre-wrap;font-variant-numeric:tabular-nums}
-.win{color:var(--pos);font-weight:600}
-.loss{color:var(--neg);font-weight:600}
-.pushr{color:var(--muted);font-weight:600}
-code{background:var(--card);padding:1px 5px;border-radius:3px}
-</style>
+.game{font-weight:600}
+.wrap{overflow-x:auto}
+.live{color:var(--pos);font-weight:700}
+.fin{color:var(--muted);font-weight:600}</style>
 <style>
 .sn-nav{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}
 .sn-tab{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;
@@ -52,126 +32,10 @@ border:1px solid var(--line)}
 <a class="sn-tab" href="results.html">Season Results</a>
 <a class="sn-tab" href="schedule.html">Schedule</a>
 <a class="sn-tab" href="live.html">Live Scores</a></nav>
-<h1>College Football Model Report</h1>
-<div class="sub">Generated 2026-10-11 02:27 &middot;
-13 games &middot; 13 with a market line &middot;
-ratings fit on 3255 games through 2026</div>
-
-<style>
-.rs-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-gap:12px;margin:0 0 18px}
-.rs-tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
-padding:12px 14px}
-.rs-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
-color:var(--muted);margin-bottom:2px}
-.rs-v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-.rs-n{font-size:12px;color:var(--muted);margin:2px 0 10px;
-font-variant-numeric:tabular-nums}
-.rs-track{position:relative;height:8px;border-radius:4px;background:var(--line)}
-.rs-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
-background:var(--accent)}
-.rs-tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);
-opacity:.65}
-.rs-be{font-size:10.5px;color:var(--muted);margin-top:5px}
-.rs-up{color:var(--pos);font-size:14px}
-.rs-down{color:var(--neg);font-size:14px}
-.rs-dim{color:var(--muted)}
-</style><div class="rs-strip"><div class="rs-tile"><div class="rs-k">Spread picks</div>
-<div class="rs-v">47.2% <span class="rs-down">&#9660;</span></div>
-<div class="rs-n">136&ndash;152&ndash;5 &middot; ROI -9.8% at &minus;110</div>
-<div class="rs-track"><span class="rs-fill" style="width:47.22%"></span>
-<span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Over / Under picks</div>
-<div class="rs-v">50.2% <span class="rs-down">&#9660;</span></div>
-<div class="rs-n">147&ndash;146 &middot; ROI -4.2% at &minus;110</div>
-<div class="rs-track"><span class="rs-fill" style="width:50.17%"></span>
-<span class="rs-tick" style="left:52.38%"></span></div></div><div class="rs-tile"><div class="rs-k">Straight-up winner</div>
-<div class="rs-v">77.1% <span class="rs-up">&#9650;</span></div>
-<div class="rs-n">226&ndash;67</div>
-<div class="rs-track"><span class="rs-fill" style="width:77.13%"></span>
-<span class="rs-tick" style="left:50.00%"></span></div></div></div><div class="rs-be" style="margin:-12px 0 16px">Every locked pick counts &mdash; graded against the closing line over 293 finished games. The tick is the &minus;110 break-even; above it a record makes money, below it it loses.</div>
-
-<div class="wrap"><table><tr>
-<th class="l">Game</th><th class="l">Kickoff</th><th>Status</th>
-<th>Sim Score</th><th>Win %</th>
-<th class="sep">Market Line</th><th>Spread Pick</th><th>Cover %</th>
-<th class="sep">Market O/U</th><th>O/U Pick</th><th>Cover %</th>
-</tr><tr>
-<td class="l game">UAB at Memphis</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>20.3 &ndash; 38.4<br><span class="dim">total 56.6</span></td><td>Memphis 87%</td>
-<td class="sep">Memphis -15.5</td><td>Memphis -15.5</td><td><b>57.0%</b></td>
-<td class="sep">54.5</td><td>OVER 54.5</td><td><b>59.5%</b></td>
-</tr><tr>
-<td class="l game">LSU at Kentucky</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>29.3 &ndash; 22.4<br><span class="dim">total 52.8</span></td><td>LSU 67%</td>
-<td class="sep">Kentucky +9.5</td><td>Kentucky +9.5</td><td><b>55.4%</b></td>
-<td class="sep">50.5</td><td>OVER 50.5</td><td><b>59.5%</b></td>
-</tr><tr>
-<td class="l game">Nevada at UTEP</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>27.8 &ndash; 25.5<br><span class="dim">total 53.7</span></td><td>Nevada 56%</td>
-<td class="sep">UTEP +10</td><td>UTEP +10</td><td><b>67.1%</b></td>
-<td class="sep">48.5</td><td>OVER 48.5</td><td><b>73.5%</b></td>
-</tr><tr>
-<td class="l game">North Dakota State at UNLV</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>23.5 &ndash; 23.3<br><span class="dim">total 50.2</span></td><td>North Dakota State 51%</td>
-<td class="sep">UNLV +2.5</td><td>UNLV +2.5</td><td><b>52.9%</b></td>
-<td class="sep">47.5</td><td>OVER 47.5</td><td><b>61.6%</b></td>
-</tr><tr>
-<td class="l game">USC at Penn State</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>28.2 &ndash; 31.2<br><span class="dim">total 56.9</span></td><td>Penn State 58%</td>
-<td class="sep">Penn State +1.5</td><td>Penn State +1.5</td><td><b>60.0%</b></td>
-<td class="sep">54.5</td><td>OVER 54.5</td><td><b>60.6%</b></td>
-</tr><tr>
-<td class="l game">Louisiana at Louisiana Tech</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>21.9 &ndash; 30.5<br><span class="dim">total 53.2</span></td><td>Louisiana Tech 71%</td>
-<td class="sep">Louisiana Tech -3</td><td>Louisiana Tech -3</td><td><b>62.8%</b></td>
-<td class="sep">47.5</td><td>OVER 47.5</td><td><b>74.9%</b></td>
-</tr><tr>
-<td class="l game">Georgia at Alabama</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>29.8 &ndash; 35.4<br><span class="dim">total 60.1</span></td><td>Alabama 64%</td>
-<td class="sep">Alabama -2.5</td><td>Alabama -2.5</td><td><b>60.0%</b></td>
-<td class="sep">51.5</td><td>OVER 51.5</td><td><b>84.0%</b></td>
-</tr><tr>
-<td class="l game">James Madison at Georgia Southern</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>35.5 &ndash; 22.3<br><span class="dim">total 56.1</span></td><td>James Madison 80%</td>
-<td class="sep">Georgia Southern +7</td><td>James Madison -7</td><td><b>63.5%</b></td>
-<td class="sep">51.5</td><td>OVER 51.5</td><td><b>70.2%</b></td>
-</tr><tr>
-<td class="l game">Syracuse at Virginia</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>20.3 &ndash; 31.9<br><span class="dim">total 53.1</span></td><td>Virginia 77%</td>
-<td class="sep">Virginia -14</td><td>Syracuse +14</td><td><b>54.3%</b></td>
-<td class="sep">49.5</td><td>OVER 49.5</td><td><b>65.7%</b></td>
-</tr><tr>
-<td class="l game">Kansas at Utah</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>18.9 &ndash; 36.2<br><span class="dim">total 54.7</span></td><td>Utah 86%</td>
-<td class="sep">Utah -15.5</td><td>Utah -15.5</td><td><b>55.4%</b></td>
-<td class="sep">49.5</td><td>OVER 49.5</td><td><b>71.9%</b></td>
-</tr><tr>
-<td class="l game">Minnesota at Purdue</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>28.5 &ndash; 24.4<br><span class="dim">total 53.5</span></td><td>Minnesota 61%</td>
-<td class="sep">Purdue +2.5</td><td>Minnesota -2.5</td><td><b>57.3%</b></td>
-<td class="sep">49.5</td><td>OVER 49.5</td><td><b>66.7%</b></td>
-</tr><tr>
-<td class="l game">Boise State at Fresno State</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>26.3 &ndash; 23.2<br><span class="dim">total 51.6</span></td><td>Boise State 58%</td>
-<td class="sep">Fresno State +8.5</td><td>Fresno State +8.5</td><td><b>63.9%</b></td>
-<td class="sep">48.5</td><td>OVER 48.5</td><td><b>64.7%</b></td>
-</tr><tr>
-<td class="l game">Hawai&#x27;i at Arizona State</td><td class="l dim">2026-10-10</td>
-<td><span class="pill play">LOCKED</span></td>
-<td>15.8 &ndash; 37.1<br><span class="dim">total 53.5</span></td><td>Arizona State 91%</td>
-<td class="sep">Arizona State -20.5</td><td>Arizona State -20.5</td><td><b>52.6%</b></td>
-<td class="sep">51.5</td><td>OVER 51.5</td><td><b>58.0%</b></td>
-</tr></table></div>
-<div class="rec"><b>Record so far:</b> straight up 226-67 (77%) &middot; ATS 136-152 (47%) &middot; O/U 147-146 (50%) &nbsp;<span class="dim">over 293 completed games &mdash; open CFB_Results.exe for the full scorecard</span></div>
+<h1>No college football games today</h1>
+<div class="sub">Checked Sunday, October 11, 2026. The model found no games kicking off in the
+next 1 day(s). Today's slate appears here automatically the morning it
+plays, and picks lock shortly before each kickoff.<br><br>
+Meanwhile: <b>Season Results</b> has the graded record, <b>Schedule</b> has
+every upcoming game, and <b>Live Scores</b> updates while games are being
+played.</div>
