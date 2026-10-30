@@ -634,6 +634,17 @@ def main():
     print("Fitting ratings...", flush=True)
     ratings = R.fit_ratings(fit_games, lam=R.DEFAULT_LAMBDA, cv=False,
                             current_season=args.season, schedule=sched)
+    # efficiency ratings for totals (pace, yards/play, first downs/play);
+    # None on desktop builds, which have no box-score data -- totals then
+    # stay points-only exactly as before
+    eff = None
+    if getattr(P, "TOTAL_MODEL", {}).get("enabled"):
+        try:
+            eff = P.fit_efficiency(games, P.load_box(), args.season)
+        except Exception as e:  # noqa: BLE001 -- totals must never sink a build
+            print(f"  (efficiency totals unavailable: {type(e).__name__}: {str(e)[:60]})")
+        if eff:
+            print("Efficiency totals active (pace + yards/play + first downs/play)")
     shrink_info = calib.get("edge_shrinkage") or {}
     shrink = shrink_info.get("shrink_factor")
     # totals get their OWN factor -- margins and totals have different error
@@ -680,6 +691,13 @@ def main():
         # locked nor graded. The Schedule tab still lists them.
         if (g.get("home_conf") not in R.FBS_CONFERENCES
                 or g.get("away_conf") not in R.FBS_CONFERENCES):
+            continue
+        # A game that has already kicked off is never priced or recorded:
+        # its pick (if any) is whatever stood at kickoff. In-progress games
+        # live on the Live Scores tab.
+        _k = pd.to_datetime(g.get("kickoff_utc") or g.get("date"),
+                            errors="coerce", utc=True)
+        if pd.notna(_k) and _k <= dt.datetime.now(dt.timezone.utc):
             continue
         print(f"  [{i}/{len(sel)}] {away} at {home}", flush=True)
         h = R.resolve_team(ratings, home)
@@ -728,6 +746,16 @@ def main():
         pred = P.summarize(home, away, sim_h, sim_a, calib=calib)
         # totals are reported calibrated, so bet calls must use the same scale
         cal_total, _ = P.calibrate_total(sim_h + sim_a, calib)
+        if eff:
+            rh, ra = P.expected_scores(ratings, h, a,
+                                       neutral=bool(g.get("neutral_site", False)),
+                                       floor=False)
+            t_eff = P.efficiency_total(eff, rh + ra, home, away)
+            if t_eff is not None:
+                # recentre the calibrated distribution on the efficiency
+                # total; its shape (spread, key-number clustering) is kept
+                cal_total = cal_total - float(np.mean(cal_total)) + t_eff
+                pred["total"] = t_eff
         calls = make_calls(pred, sim_h, sim_a, line)
         if calls.get("total"):
             t = calls["total"]["market_total"]
@@ -789,9 +817,10 @@ def main():
                                  errors="coerce", utc=True)
         hrs = ((kick_ts - dt.datetime.now(dt.timezone.utc)).total_seconds() / 3600.0
                if pd.notna(kick_ts) else 0.0)
-        is_locked = hrs <= args.lock_hours
+        is_locked = 0 < hrs <= args.lock_hours
 
         (ledger_rows if is_locked else preview_rows).append({
+            "_kick_utc": g.get("kickoff_utc"),
             "event_id": str(eid), "predicted_at": dt.datetime.now().isoformat(timespec="seconds"),
             "season": args.season, "week": g.get("week"), "kickoff": g.get("date"),
             "home_team": home, "away_team": away,
@@ -838,7 +867,9 @@ def main():
     #    re-running before kickoff leaves the original call standing, which is
     #    the entire point of keeping a prospective record.
     if ledger_rows:
-        n_new, n_kept = LG.record(ledger_rows)
+        n_new, n_kept = LG.record(
+            ledger_rows,
+            refresh=os.environ.get("REPORT_REFRESH_PICKS", "") == "1")
         print(f"  ledger: {n_new} prediction(s) LOCKED "
               f"(kickoff within {args.lock_hours:g}h)"
               + (f", {n_kept} already locked from an earlier run" if n_kept else ""))

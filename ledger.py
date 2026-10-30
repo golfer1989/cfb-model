@@ -102,7 +102,7 @@ def model_version(calib):
 MAX_LOCK_LEAD_HOURS = 48
 
 
-def record(rows, max_lead_hours=MAX_LOCK_LEAD_HOURS):
+def record(rows, max_lead_hours=MAX_LOCK_LEAD_HOURS, refresh=False):
     """Append predictions. Existing events are left EXACTLY as they were.
 
     A second guard sits here alongside the caller's lock window: a prediction
@@ -117,6 +117,16 @@ def record(rows, max_lead_hours=MAX_LOCK_LEAD_HOURS):
     Returns (n_new, n_skipped). A skip is not an error -- it means the report
     was re-run before kickoff and the original call stands, which is the whole
     point of the ledger.
+
+    refresh=True (website builds, 2026-10-30): an existing UNGRADED row may be
+    replaced by a newer prediction, but ONLY while the game has not kicked
+    off -- each row must carry `_kick_utc`, and any row at or after kickoff is
+    refused. The record therefore holds the LAST pick made before kickoff and
+    can never change once the game starts. Why: GitHub runs the scheduled
+    workflow ~5 times a day instead of the 34 it is asked for, so a narrow
+    lock-near-kickoff window missed a third of games. A 24h window guarantees
+    every game gets a pick; refresh keeps that pick as fresh as the runs
+    allow. Returns (n_new + n_refreshed, n_skipped).
     """
     df = _load()
     have = set(df["event_id"])
@@ -128,8 +138,23 @@ def record(rows, max_lead_hours=MAX_LOCK_LEAD_HOURS):
             return True                      # unknown kickoff: let it through
         return (k - now).total_seconds() / 3600.0 <= max_lead_hours
 
+    def _pre_kickoff(r):
+        k = pd.to_datetime(r.get("_kick_utc"), errors="coerce", utc=True)
+        return pd.notna(k) and now < k
+
+    replace_ids = set()
+    if refresh:
+        # never pick up a game after kickoff, whether new or a refresh
+        rows = [r for r in rows if _pre_kickoff(r)]
+        graded = set(df.loc[df["graded_at"].notna(), "event_id"])
+        replace_ids = {str(r["event_id"]) for r in rows
+                       if str(r["event_id"]) in have
+                       and str(r["event_id"]) not in graded}
+
     fresh = [r for r in rows
-             if str(r["event_id"]) not in have and _fresh_enough(r)]
+             if (str(r["event_id"]) not in have
+                 or str(r["event_id"]) in replace_ids)
+             and _fresh_enough(r)]
     skipped = len(rows) - len(fresh)
     if fresh:
         add = pd.DataFrame(fresh)
@@ -137,6 +162,8 @@ def record(rows, max_lead_hours=MAX_LOCK_LEAD_HOURS):
         for c in COLUMNS:
             if c not in add.columns:
                 add[c] = np.nan
+        if replace_ids:
+            df = df[~df["event_id"].isin(set(add["event_id"]) & replace_ids)]
         df = pd.concat([df, add[COLUMNS]], ignore_index=True)
         _save(df)
     return len(fresh), skipped

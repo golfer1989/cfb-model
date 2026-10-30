@@ -119,8 +119,15 @@ def collect(current_season, played_weeks=None, budget=40):
         for w in weeks:
             if not _have(season, w):
                 todo.append((season, w))
+    # Current season: a week saved before all its games finished must be
+    # fetched AGAIN. The first version cached a week the first time ANY game
+    # in it was final, so a week first fetched on a Thursday night froze with
+    # 1-3 games forever (2026 weeks 2-9, found 2026-10-30). Complete weeks
+    # cover 100% of the schedule's FBS-involved finals, so "stored < 95% of
+    # finals" is a reliable staleness test.
+    finals = finals_by_week_from_schedule(current_season)
     for w in sorted(played_weeks or []):
-        if not _have(current_season, w):
+        if not _have(current_season, w) or _stored_games(current_season, w) < 0.95 * finals.get(w, 0):
             todo.append((current_season, w))
 
     fetched, games = 0, 0
@@ -136,6 +143,34 @@ def collect(current_season, played_weeks=None, budget=40):
         return prefix + "weeks up to date"
     return (prefix + f"fetched {fetched} week(s), {games} game payloads"
             + (f"; {len(todo) - fetched} week(s) remaining" if len(todo) > fetched else ""))
+
+
+def _stored_games(season, week, season_type="regular"):
+    """How many games the saved payload for this week holds (0 if none)."""
+    try:
+        with open(_path(season, week, season_type), encoding="utf-8") as f:
+            return len(json.load(f) or [])
+    except (OSError, ValueError):
+        return 0
+
+
+def finals_by_week_from_schedule(season):
+    """{week: number of STATUS_FINAL games} from the schedule file."""
+    import csv
+    path = os.path.join(DATA_DIR, f"schedule_{season}.csv")
+    out = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r.get("status") == "STATUS_FINAL":
+                    try:
+                        w = int(float(r.get("week") or 0))
+                    except ValueError:
+                        continue
+                    out[w] = out.get(w, 0) + 1
+    except FileNotFoundError:
+        pass
+    return out
 
 
 def played_weeks_from_schedule(season):

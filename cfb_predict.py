@@ -631,3 +631,122 @@ def format_game(p, calib=None):
         for m in st.get("mismatches", [])[:3]:
             L.append(f"    {m['unit']:<52} {m['edge_sd']:+.2f} sd")
     return "\n".join(L)
+
+
+# ---------------------------------------------------------------------------
+# Efficiency-informed totals (added 2026-10-30)
+# ---------------------------------------------------------------------------
+# Tested in experiments/efficiency_lab.py: a walk-forward over 2024-2025
+# (1,552 out-of-sample games) fitting opponent-adjusted ratings on PACE
+# (offensive plays), YARDS PER PLAY and FIRST DOWNS PER PLAY with the same
+# ridge engine as the points ratings. For MARGINS these added nothing -- the
+# points ratings already carry that information. For TOTALS, adding them
+# improved accuracy in BOTH seasons when fitted on the other (RMSE 15.44 ->
+# 15.34 on 2025, 16.22 -> 16.15 on 2024; O/U vs the closing total +1.7 and
+# +1.5 points). Paired t = +1.74 / +0.83: consistent but not yet
+# conclusive, so it ships with a confirmation check on 2026 data and this
+# flag is the single switch to roll it back.
+TOTAL_MODEL = {
+    "enabled": True,
+    # [raw points total, pace sum, yards-per-play sum, first-downs-per-play
+    #  sum, constant] -- pooled 2024-25 out-of-sample fit, n = 1,552
+    "coef": [0.383488, 0.307139, 0.183903, 12.349965, -16.844231],
+    # each stream is scaled to points-like spread before the ridge fit so
+    # the points-tuned penalty behaves comparably; MUST match the lab
+    "scale": {"plays": 1.513294, "ypp": 9.225147, "fdpp": 219.254040},
+    "min_games": 150,
+}
+
+
+def _box_attempts(stats):
+    v = str(stats.get("completionAttempts", "") or "")
+    for sep in ("-", "/"):
+        if sep in v:
+            try:
+                return float(v.split(sep)[1])
+            except ValueError:
+                return np.nan
+    return np.nan
+
+
+def load_box(data_dir=None):
+    """Per-game box stats from data/raw_cache/cfbd/gamestats_*.json (written
+    by collect_game_stats.py): plays, yards/play and first downs/play for
+    each side. Empty frame when no box data exists (desktop builds)."""
+    import glob
+    dd = data_dir or DATA_DIR
+    rows = []
+    for path in glob.glob(os.path.join(dd, "raw_cache", "cfbd", "gamestats_*.json")):
+        try:
+            payload = json.load(open(path, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for g in payload or []:
+            teams = {t.get("homeAway"): t for t in g.get("teams", [])}
+            if "home" not in teams or "away" not in teams:
+                continue
+            rec = {"event_id": str(g.get("id"))}
+            ok = True
+            for side in ("home", "away"):
+                st = {s.get("category"): s.get("stat") for s in teams[side].get("stats", [])}
+                try:
+                    rush = float(st.get("rushingAttempts"))
+                    yards = float(st.get("totalYards"))
+                    fd = float(st.get("firstDowns"))
+                except (TypeError, ValueError):
+                    ok = False
+                    break
+                plays = rush + _box_attempts(st)
+                if not (plays and plays > 20):
+                    ok = False
+                    break
+                rec[f"{side}_plays"] = plays
+                rec[f"{side}_ypp"] = yards / plays
+                rec[f"{side}_fdpp"] = fd / plays
+            if ok:
+                rows.append(rec)
+    if not rows:
+        return pd.DataFrame(columns=["event_id"])
+    return pd.DataFrame(rows).drop_duplicates("event_id")
+
+
+def fit_efficiency(games, box, season, lam=None):
+    """Ridge ratings for pace, yards/play and first downs/play, fitted with
+    the same engine and recency weighting as the points ratings. Returns
+    {stream: Ratings} or None when there is too little box data."""
+    if not TOTAL_MODEL.get("enabled") or box is None or not len(box):
+        return None
+    g = games.copy()
+    g["event_id"] = g["event_id"].astype(str)
+    gb = g.merge(box, on="event_id", how="inner")
+    if len(gb) < TOTAL_MODEL["min_games"]:
+        return None
+    lam = R.DEFAULT_LAMBDA if lam is None else lam
+    out = {}
+    for stream, col in (("plays", "plays"), ("ypp", "ypp"), ("fdpp", "fdpp")):
+        s = TOTAL_MODEL["scale"][stream]
+        x = gb[["home_team", "away_team", "home_conf", "away_conf",
+                "neutral_site", "season", "week", "date",
+                f"home_{col}", f"away_{col}"]].dropna().copy()
+        x["home_score"] = x[f"home_{col}"] * s
+        x["away_score"] = x[f"away_{col}"] * s
+        out[stream] = R.fit_ratings(x, lam=lam, cv=False, current_season=season)
+    return out
+
+
+def efficiency_total(eff, raw_points_total, home, away):
+    """Efficiency-informed projected total, or None when unavailable (no
+    efficiency ratings, or either team unrated) -- callers then keep the
+    points-only total. Home field cancels in a total, so neutral is moot."""
+    if not eff:
+        return None
+    sums = {}
+    for stream, rt in eff.items():
+        h, a = R.resolve_team(rt, home), R.resolve_team(rt, away)
+        if not (rt.has(h) and rt.has(a)):
+            return None
+        tot = (2 * rt.mu + rt.off[h] - rt.defn[a] + rt.off[a] - rt.defn[h])
+        sums[stream] = tot / TOTAL_MODEL["scale"][stream]
+    c = TOTAL_MODEL["coef"]
+    return float(c[0] * raw_points_total + c[1] * sums["plays"]
+                 + c[2] * sums["ypp"] + c[3] * sums["fdpp"] + c[4])
