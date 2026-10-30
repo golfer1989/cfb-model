@@ -2,8 +2,12 @@ name: Daily CFB report
 
 on:
   schedule:
-    - cron: "*/30 13-23 * * *"
-    - cron: "*/30 0-5 * * *"
+    # Off the top of the hour on purpose: GitHub documents :00 as its peak
+    # load and drops/delays scheduled runs then. Measured Oct 2026: of 34
+    # firings/day requested, ~5 actually ran. Picks no longer depend on any
+    # single firing landing on time (24h lock window + refresh), so these
+    # are best-effort refresh chances, all day.
+    - cron: "7,37 * * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -44,12 +48,11 @@ jobs:
           except FileNotFoundError:
               pass
           morning = now_ct.hour >= 8 and done != today_ct
-          # pre-kickoff run: some game kicks off within 35 minutes and its
-          # pick is NOT yet locked in the ledger. Builds take ~2-4 min, so
-          # picks land 15-35 min before kickoff with near-closing lines.
-          # Keying on "still unlocked" (instead of a fixed time window)
-          # means a delayed firing self-heals: the next check still builds
-          # and locks the game rather than letting the wave slip through.
+          # Build when (a) any FBS-vs-FBS game kicking off in the next 24h
+          # has no pick yet -- guarantees coverage even though GitHub runs
+          # only a fraction of scheduled firings -- or (b) any such game kicks
+          # off within 90 min -- refreshes its pick with near-closing lines
+          # and late injury news. Picks are never written after kickoff.
           locked = set()
           try:
               with open("data/ledger.csv") as f:
@@ -68,8 +71,6 @@ jobs:
                           continue
                       if r.get("home_conf") not in FBS or r.get("away_conf") not in FBS:
                           continue
-                      if str(r.get("event_id") or "").strip() in locked:
-                          continue
                       try:
                           t = dt.datetime.strptime(
                               r.get("kickoff_utc") or "",
@@ -77,7 +78,10 @@ jobs:
                       except ValueError:
                           continue
                       mins = (t - now).total_seconds() / 60
-                      if 0 < mins <= 35:
+                      if mins <= 0:
+                          continue
+                      unpicked = str(r.get("event_id") or "").strip() not in locked
+                      if mins <= 90 or (unpicked and mins <= 1440):
                           prewave = True
                           break
           except FileNotFoundError:
@@ -103,7 +107,8 @@ jobs:
         if: steps.guard.outputs.go == 'yes'
         env:
           REPORT_DAYS: "1"
-          REPORT_LOCK_HOURS: "3"
+          REPORT_LOCK_HOURS: "24"
+          REPORT_REFRESH_PICKS: "1"
           DATA_SOURCE: cfbd
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
         run: python daily_web.py
