@@ -178,6 +178,20 @@ def select_games(sched, days=None, week=None):
 # Betting calls
 # ---------------------------------------------------------------------------
 
+def _kick_label(g):
+    """'Fri 6:30 PM CT' from the game's UTC kickoff; the bare date when no
+    time is known or the timezone database is missing (Windows builds
+    without tzdata must never fail a report over a label)."""
+    k = pd.to_datetime(g.get("kickoff_utc") or None, errors="coerce", utc=True)
+    if pd.isna(k):
+        return str(g.get("date", ""))[:10]
+    try:
+        t = k.tz_convert("America/Chicago")
+        return f'{t.strftime("%a")} {t.strftime("%I:%M %p").lstrip("0")} CT'
+    except Exception:  # noqa: BLE001
+        return str(g.get("date", ""))[:10]
+
+
 def make_calls(pred, sim_h, sim_a, line):
     """Turn the simulated distribution into explicit bet calls with win
     probabilities computed AGAINST THE ACTUAL MARKET NUMBER."""
@@ -744,8 +758,16 @@ def main():
         sim_h, sim_a = P.simulate(eh, ea, n_sims=args.sims,
                                   sigma=calib["score_resid_std"], seed=eid)
         pred = P.summarize(home, away, sim_h, sim_a, calib=calib)
-        # totals are reported calibrated, so bet calls must use the same scale
-        cal_total, _ = P.calibrate_total(sim_h + sim_a, calib)
+        # The total's CENTRE is calibrated (pulled toward the league mean);
+        # its SPREAD stays as simulated. Until 2026-10-30 the calibration's
+        # 0.54 slope was applied to every simulated total, which also shrank
+        # the spread of outcomes from ~15 points to ~8 -- while real totals
+        # land ~16 points from projections (2026 RMSE 16.2). O/U Cover % read
+        # 62% on average against a 49.5% actual hit rate over 390 graded
+        # picks, and 80%+ claims hit 45%. Shifting instead of scaling keeps
+        # the simulator's honest width; margins were never scaled.
+        raw_total = sim_h + sim_a
+        cal_total = raw_total - float(np.mean(raw_total)) + pred["total"]
         if eff:
             rh, ra = P.expected_scores(ratings, h, a,
                                        neutral=bool(g.get("neutral_site", False)),
@@ -756,6 +778,13 @@ def main():
                 # total; its shape (spread, key-number clustering) is kept
                 cal_total = cal_total - float(np.mean(cal_total)) + t_eff
                 pred["total"] = t_eff
+        # the Sim Score shown must add up to the total shown: keep the
+        # simulated margin and split the (calibrated or efficiency) total
+        # around it -- "25.0 - 26.9, total 57.5" read like an arithmetic bug
+        _m = pred["mean_margin"]
+        if abs(_m) < pred["total"]:          # never split into a negative score
+            pred["exp_home"] = (pred["total"] + _m) / 2.0
+            pred["exp_away"] = (pred["total"] - _m) / 2.0
         calls = make_calls(pred, sim_h, sim_a, line)
         if calls.get("total"):
             t = calls["total"]["market_total"]
@@ -847,7 +876,7 @@ def main():
             "model_version": LG.model_version(calib),
         })
 
-        rows.append({"home": home, "away": away, "kick": str(g.get("date", ""))[:16],
+        rows.append({"home": home, "away": away, "kick": _kick_label(g),
                      "locked": is_locked, "hrs_to_kick": hrs,
                      "spread_conf": sp_conf, "total_conf": to_conf,
                      "pred": pred, "calls": calls,
@@ -903,9 +932,13 @@ def main():
     # forward-looking; all it carries is a one-line pointer to the record so
     # the two tools stay obviously connected.
     results_html = ""
+    # website builds skip it: the record strip at the top already carries
+    # these numbers, the Season Results tab has every graded pick, and the
+    # desktop-only "open CFB_Results.exe" pointer is wrong there
+    on_web = os.environ.get("GITHUB_ACTIONS") == "true"
     try:
         led = LG._load()
-        n_graded = int(led["graded_at"].notna().sum())
+        n_graded = 0 if on_web else int(led["graded_at"].notna().sum())
         if n_graded:
             s_ = LG.summarize(led)
             bits = []
