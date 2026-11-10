@@ -659,6 +659,17 @@ def main():
             print(f"  (efficiency totals unavailable: {type(e).__name__}: {str(e)[:60]})")
         if eff:
             print("Efficiency totals active (pace + yards/play + first downs/play)")
+    # play-by-play margins (success rate, explosiveness, EPA/play; garbage
+    # time excluded); None on desktop builds, which have no play-by-play
+    # data -- margins then stay points-only exactly as before
+    pbp = None
+    if getattr(P, "MARGIN_MODEL", {}).get("enabled"):
+        try:
+            pbp = P.fit_pbp(games, args.season)
+        except Exception as e:  # noqa: BLE001 -- margins must never sink a build
+            print(f"  (play-by-play margins unavailable: {type(e).__name__}: {str(e)[:60]})")
+        if pbp:
+            print("Play-by-play margins active (success rate + explosiveness + EPA/play)")
     shrink_info = calib.get("edge_shrinkage") or {}
     shrink = shrink_info.get("shrink_factor")
     # totals get their OWN factor -- margins and totals have different error
@@ -749,12 +760,23 @@ def main():
         if adj_a:
             qb_adj[a] = adj_a
 
+        # play-by-play blend: replace the points-rating margin with the
+        # blended one by shifting both sides equally (the total is untouched);
+        # the validated coach/churn/QB adjustments still apply on top
+        _neu = bool(g.get("neutral_site", False))
+        pbp_shift = 0.0
+        if pbp:
+            b0h, b0a = P.expected_scores(ratings, h, a, neutral=_neu, floor=True)
+            _mb = P.pbp_margin(pbp, b0h - b0a, home, away, neutral=_neu)
+            if _mb is not None:
+                pbp_shift = _mb - (b0h - b0a)
         eh, ea = P.expected_scores(ratings, h, a,
-                                   neutral=bool(g.get("neutral_site", False)),
+                                   neutral=_neu,
                                    qb_adj=qb_adj,
                                    margin_adj=(P.coach_margin_adj(coach_new, home, away)
                                                + P.churn_margin_adj(churn_z, home, away,
-                                                                    g.get("week"), churn_cfg)))
+                                                                    g.get("week"), churn_cfg)
+                                               + pbp_shift))
         sim_h, sim_a = P.simulate(eh, ea, n_sims=args.sims,
                                   sigma=calib["score_resid_std"], seed=eid)
         pred = P.summarize(home, away, sim_h, sim_a, calib=calib)

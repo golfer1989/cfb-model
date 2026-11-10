@@ -750,3 +750,149 @@ def efficiency_total(eff, raw_points_total, home, away):
     c = TOTAL_MODEL["coef"]
     return float(c[0] * raw_points_total + c[1] * sums["plays"]
                  + c[2] * sums["ypp"] + c[3] * sums["fdpp"] + c[4])
+
+
+# ---------------------------------------------------------------------------
+# Play-by-play margins (added 2026-11-10)
+# ---------------------------------------------------------------------------
+# The owner's rebuild (2026-11-09): rate teams on how they PLAY, not only on
+# final scores. CFBD's per-game play-by-play metrics, garbage time excluded
+# (data/raw_cache/cfbd/advgame_*.json, written by collect_game_stats.py), are
+# fitted with the same ridge engine as the points ratings, three streams:
+# EPA per play, success rate and explosiveness. The margin is then a blend
+# of the points-rating margin and the three play-by-play differentials.
+#
+# PREREGISTERED test, experiments/pbp_lab.py (criteria locked 2026-11-10,
+# before the data existed): walk-forward 2024/2025/2026, blend weights fitted
+# only on other seasons. Margin RMSE 15.83 -> 15.74 (2024), 15.47 -> 15.39
+# (2025), 15.85 -> 15.76 (2026); pooled paired t = +2.04 over 2,168 games
+# -> PASS. The gain is largest early in the season (blocks 0-2: 17.14 ->
+# 16.87) and fades to nothing by November. ATS against 2026's DraftKings
+# closes did not improve (48.1% -> 47.9%): projections got more accurate,
+# picks against the market did not. Success rate carries the weight (its
+# coefficient was 59.0 / 61.4 when fitted on 2024 / 2025 alone); EPA/play is
+# collinear with it and gets ~0. This dict is the single rollback switch.
+MARGIN_MODEL = {
+    "enabled": True,
+    # [1, points margin, EPA/play diff, success-rate diff, explosiveness diff]
+    # fitted on all 2,168 walk-forward games, 2024-2026 (the ship rule)
+    "coef": [0.055726, 0.588169, -0.382473, 60.216271, 5.307851],
+    # stream -> points-like scale for the ridge fit; MUST match the lab
+    "scale": {"ppa": 55.277932, "sr": 137.280467, "xpl": 49.574556},
+    "min_games": 150,
+}
+PBP_STREAMS = {"ppa": "ppa", "sr": "successRate", "xpl": "explosiveness"}
+
+
+def _pbp_norm(name):
+    import re
+    import unicodedata
+    s = unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode()
+    s = s.lower().replace("&", "and").replace("state", "st")
+    return re.sub(r"[^a-z0-9]", "", s)
+
+
+def load_adv(data_dir=None):
+    """Team-game play-by-play rows (offense) from advgame_*.json; an empty
+    frame when there is none (desktop builds)."""
+    import glob
+    dd = data_dir or DATA_DIR
+    rows = []
+    for path in glob.glob(os.path.join(dd, "raw_cache", "cfbd", "advgame_*.json")):
+        try:
+            payload = json.load(open(path, encoding="utf-8")) or []
+        except (OSError, ValueError):
+            continue
+        for r in payload:
+            off = r.get("offense") or {}
+            rec = {"event_id": str(r.get("gameId", r.get("game_id", r.get("id")))),
+                   "team": r.get("team")}
+            for k, col in PBP_STREAMS.items():
+                try:
+                    v = off.get(col)
+                    rec[k] = float(v) if v is not None else np.nan
+                except (TypeError, ValueError):
+                    rec[k] = np.nan
+            rows.append(rec)
+    return pd.DataFrame(rows)
+
+
+def attach_adv(games, adv):
+    """games plus home_<stream>/away_<stream> columns. Rows are matched by
+    team name; when the two sources spell one school differently ("App State"
+    vs "Appalachian State") and the other side matches, the remaining row is
+    that team. Unmatchable games get NaN -- never a guess."""
+    g = games.copy()
+    g["event_id"] = g["event_id"].astype(str)
+    cols = {f"{s}_{k}": [] for s in ("home", "away") for k in PBP_STREAMS}
+    if adv is None or adv.empty:
+        for c in cols:
+            g[c] = np.nan
+        return g
+    adv = adv.copy()
+    adv["_t"] = adv["team"].map(_pbp_norm)
+    by = {e: x for e, x in adv.groupby("event_id")}
+    for e, h, a in zip(g["event_id"], g["home_team"], g["away_team"]):
+        x = by.get(e)
+        hr = ar = None
+        if x is not None and len(x) >= 2:
+            hr = x[x["_t"] == _pbp_norm(h)]
+            ar = x[x["_t"] == _pbp_norm(a)]
+            if len(x) == 2 and len(hr) + len(ar) == 1:
+                if len(hr) == 1:
+                    ar = x[x.index != hr.index[0]]
+                else:
+                    hr = x[x.index != ar.index[0]]
+            if not (len(hr) == 1 and len(ar) == 1):
+                hr = ar = None
+        for side, rr in (("home", hr), ("away", ar)):
+            for k in PBP_STREAMS:
+                cols[f"{side}_{k}"].append(float(rr.iloc[0][k]) if rr is not None else np.nan)
+    for c, v in cols.items():
+        g[c] = v
+    return g
+
+
+def fit_pbp(games, season, data_dir=None, lam=None):
+    """{stream: Ratings} from the play-by-play metrics, or None when the
+    model is off or there is too little data -- callers then keep the
+    points-only margin exactly as before."""
+    if not MARGIN_MODEL.get("enabled"):
+        return None
+    adv = load_adv(data_dir)
+    if adv.empty:
+        return None
+    g = attach_adv(games[games["home_score"].notna()], adv)
+    g = g[g["home_ppa"].notna()]
+    if len(g) < MARGIN_MODEL["min_games"]:
+        return None
+    lam = R.DEFAULT_LAMBDA if lam is None else lam
+    out = {}
+    for k in PBP_STREAMS:
+        s = MARGIN_MODEL["scale"][k]
+        x = g[["home_team", "away_team", "home_conf", "away_conf", "neutral_site",
+               "season", "week", "date", f"home_{k}", f"away_{k}"]].dropna().copy()
+        x["home_score"] = x[f"home_{k}"] * s
+        x["away_score"] = x[f"away_{k}"] * s
+        out[k] = R.fit_ratings(x, lam=lam, cv=False, current_season=season)
+    return out
+
+
+def pbp_margin(pbp, points_margin, home, away, neutral=False):
+    """Blended home margin, or None when either team has no play-by-play
+    rating (callers keep the points margin). Matches experiments/pbp_lab.py:
+    each stream's home-minus-away differential includes its own home edge."""
+    if not pbp:
+        return None
+    d = {}
+    for k, rt in pbp.items():
+        h, a = R.resolve_team(rt, home), R.resolve_team(rt, away)
+        if not (rt.has(h) and rt.has(a)):
+            return None
+        hfa = 0.0 if neutral else rt.hfa / 2.0
+        eh = rt.mu + rt.off[h] - rt.defn[a] + hfa
+        ea = rt.mu + rt.off[a] - rt.defn[h] - hfa
+        d[k] = (eh - ea) / MARGIN_MODEL["scale"][k]
+    c = MARGIN_MODEL["coef"]
+    return float(c[0] + c[1] * points_margin + c[2] * d["ppa"]
+                 + c[3] * d["sr"] + c[4] * d["xpl"])
