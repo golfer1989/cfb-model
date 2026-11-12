@@ -507,3 +507,4 @@ event_id,predicted_at,season,week,kickoff,home_team,away_team,neutral_site,exp_h
 401866461,2026-11-11T18:38:45,2026,11,2026-11-11,Ball State,Buffalo,False,28.36,28.76,-0.4,57.12,0.4891,1.5,51.5,DraftKings,HOME,NO BET,0.5127,OVER,NO BET,0.6309,sig11.35_es0.000_ts0.000,,,,,,,,,,
 401866462,2026-11-11T18:38:45,2026,11,2026-11-11,Central Michigan,Sacramento State,False,30.35,16.44,13.9,46.79,0.8278,-17.5,42.5,DraftKings,AWAY,NO BET,0.6035,OVER,NO BET,0.5979,sig11.35_es0.000_ts0.000,,,,,,,,,,
 401866463,2026-11-11T18:38:46,2026,11,2026-11-11,Toledo,Massachusetts,False,34.86,17.78,17.08,52.64,0.8659,-14.0,51.5,DraftKings,HOME,NO BET,0.564,OVER,NO BET,0.5305,sig11.35_es0.000_ts0.000,,,,,,,,,,
+401862824,2026-11-12T01:29:19,2026,11,2026-11-12,South Florida,Memphis,False,26.79,27.88,-1.09,54.67,0.4707,3.5,50.5,DraftKings,HOME,NO BET,0.5588,OVER,NO BET,0.5963,sig11.35_es0.000_ts0.000,,,,,,,,,,
