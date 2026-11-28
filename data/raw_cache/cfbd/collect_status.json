@@ -1,17 +1,10 @@
 {
- "utc": "2026-11-28T10:16:23Z",
+ "utc": "2026-11-28T18:26:08Z",
  "season_tables": "",
- "box": "box scores: fetched 1 week(s), 17 game payloads",
+ "box": "box scores up to date",
  "advgame": {
   "endpoint": "/stats/game/advanced",
-  "fetched": [
-   [
-    2026,
-    13,
-    "regular",
-    34
-   ]
-  ],
+  "fetched": [],
   "error": null,
   "remaining": 0
  }
